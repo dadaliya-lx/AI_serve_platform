@@ -867,11 +867,11 @@
             return;
           }
 
+          // 获取表单数据
           const formData = new FormData(this);
-          const imageInput = document.getElementById("imageInput");
-
-          if (imageInput.files.length > 0) {
-            formData.append("image", imageInput.files[0]);
+          const data = {};
+          for (let [key, value] of formData.entries()) {
+            data[key] = value;
           }
 
           const submitBtn = this.querySelector('button[type="submit"]');
@@ -880,7 +880,7 @@
           submitBtn.disabled = true;
 
           try {
-            const result = await APIClient.submitRepair(formData);
+            const result = await APIClient.submitRepair(data);
 
             if (result && result.success) {
               successContent.innerHTML = `您的报修申请已成功提交，报修编号为：<strong>${result.repair_id}</strong>，我们将尽快处理。<br><br>您可以在<a href="user-center.html" style="color: var(--primary-color); font-weight: bold;">用户中心</a>查看所有历史申报记录。`;

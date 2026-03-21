@@ -106,8 +106,11 @@ const APIClient = {
     });
   },
 
-  async submitRepair(formData) {
-    return await uploadFile("/repairs", formData);
+  async submitRepair(data) {
+    return await apiRequest("/repairs", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   },
 
   async getRepairs() {
