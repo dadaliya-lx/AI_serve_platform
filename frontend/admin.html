@@ -219,27 +219,47 @@
           <nav class="sidebar-nav">
             <ul>
               <li>
-                <a href="javascript:void(0)" class="nav-item active" data-target="dashboard">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-item active"
+                  data-target="dashboard"
+                >
                   <i class="fas fa-chart-bar"></i> 数据概览
                 </a>
               </li>
               <li>
-                <a href="javascript:void(0)" class="nav-item" data-target="repair-manage">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-item"
+                  data-target="repair-manage"
+                >
                   <i class="fas fa-tools"></i> 报修管理
                 </a>
               </li>
               <li>
-                <a href="javascript:void(0)" class="nav-item" data-target="news-manage">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-item"
+                  data-target="news-manage"
+                >
                   <i class="fas fa-bullhorn"></i> 公告管理
                 </a>
               </li>
               <li>
-                <a href="javascript:void(0)" class="nav-item" data-target="user-manage">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-item"
+                  data-target="user-manage"
+                >
                   <i class="fas fa-users"></i> 用户管理
                 </a>
               </li>
               <li>
-                <a href="javascript:void(0)" class="nav-item" data-target="system-setting">
+                <a
+                  href="javascript:void(0)"
+                  class="nav-item"
+                  data-target="system-setting"
+                >
                   <i class="fas fa-cog"></i> 系统设置
                 </a>
               </li>
@@ -688,37 +708,60 @@
         }
 
         // 登录表单提交
-        loginForm.addEventListener("submit", function (e) {
+        loginForm.addEventListener("submit", async function (e) {
           e.preventDefault();
           const username = document.getElementById("username").value;
           const password = document.getElementById("password").value;
 
-          // 模拟登录验证
-          if (username === "admin" && password === "admin123") {
-            loginPage.style.display = "none";
-            adminPage.style.display = "block";
-            document.getElementById("adminName").textContent = username;
+          // 显示加载状态
+          const submitBtn = loginForm.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<div class="loading"></div>';
+          submitBtn.disabled = true;
 
-            // 存储登录状态
-            localStorage.setItem("adminLoggedIn", "true");
+          try {
+            const result = await APIClient.adminLogin(username, password);
 
-            // 登录后加载数据
-            loadRepairData();
-            updateDashboardStats();
-            initFilterListeners();
-            loadNewsData();
-            initNewsListeners();
-            loadUserData();
-            initSystemSettings();
-          } else {
-            alert("用户名或密码错误");
+            if (result && result.success) {
+              loginPage.style.display = "none";
+              adminPage.style.display = "block";
+              document.getElementById("adminName").textContent =
+                result.user.username;
+
+              // 存储 Token 和登录状态
+              localStorage.setItem("adminToken", result.token);
+              localStorage.setItem("adminUser", JSON.stringify(result.user));
+              localStorage.setItem("adminLoggedIn", "true");
+
+              // 登录后加载数据
+              loadRepairData();
+              updateDashboardStats();
+              initFilterListeners();
+              loadNewsData();
+              initNewsListeners();
+              loadUserData();
+              initSystemSettings();
+            } else {
+              showMessage(
+                result && result.message ? result.message : "登录失败",
+                "error",
+              );
+            }
+          } catch (error) {
+            showMessage("登录过程中出现错误，请检查网络连接", "error");
+            console.error(error);
+          } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
           }
         });
 
         // 退出登录
         logoutBtn.addEventListener("click", function () {
-          // 清除登录状态
+          // 清除登录状态和 Token
           localStorage.removeItem("adminLoggedIn");
+          localStorage.removeItem("adminToken");
+          localStorage.removeItem("adminUser");
 
           // 跳转到用户界面
           window.location.href = "index.html";
@@ -766,11 +809,22 @@
         }
 
         // 加载报修数据
-        function loadRepairData() {
-          let repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+        async function loadRepairData() {
           const tableBody = document.querySelector(
             "#repair-manage .data-table tbody",
           );
+
+          // 从 API 获取报修数据
+          let repairs = [];
+          try {
+            const result = await APIClient.adminGetRepairs();
+            if (result && result.success) {
+              repairs = result.repairs || [];
+            }
+          } catch (error) {
+            console.error("加载报修数据失败:", error);
+            repairs = [];
+          }
 
           // 获取筛选条件
           const statusFilter = document.getElementById("statusFilter").value;
@@ -787,17 +841,18 @@
           }
           if (facilityFilter) {
             repairs = repairs.filter(
-              (repair) => repair.facilityType === facilityFilter,
+              (repair) => repair.facility_type === facilityFilter,
             );
           }
 
           // 应用搜索
           if (searchTerm) {
-            repairs = repairs.filter((repair) =>
-              repair.repairId.includes(searchTerm),
+            repairs = repairs.filter(
+              (repair) =>
+                repair.repair_id.includes(searchTerm) ||
+                repair.user_name?.includes(searchTerm) ||
+                repair.user_phone?.includes(searchTerm),
             );
-            // 搜索完成后清空搜索输入框
-            searchInput.value = "";
           }
 
           // 清空表格
@@ -811,15 +866,15 @@
             const statusInfo = getStatusInfo(repair.status);
 
             row.innerHTML = `
-                        <td>${repair.repairId}</td>
-                        <td>${repair.facilityType}</td>
-                        <td>${repair.damageType}</td>
-                        <td>${repair.address || "-"}</td>
+                        <td>${repair.repair_id}</td>
+                        <td>${repair.facility_type}</td>
+                        <td>${repair.damage_type}</td>
+                        <td>${repair.location || "-"}</td>
                         <td>${repair.description || "-"}</td>
-                        <td>${new Date(repair.submitTime).toLocaleString()}</td>
+                        <td>${new Date(repair.submit_time).toLocaleString()}</td>
                         <td><span class="status-badge ${repair.status}">${statusInfo.text}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-primary" onclick="showRepairDetail('${repair.repairId}')">
+                            <button class="btn btn-sm btn-primary" onclick="showRepairDetail('${repair.repair_id}')">
                                 <i class="fas fa-eye"></i> 查看详情
                             </button>
                         </td>
@@ -857,47 +912,29 @@
         }
 
         // 更新数据概览统计
-        function updateDashboardStats() {
-          const repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+        async function updateDashboardStats() {
+          try {
+            const result = await APIClient.adminGetStats();
+            if (result && result.success) {
+              const stats = result.stats;
 
-          // 计算统计数据
-          const totalRepairs = repairs.length;
-          const completedRepairs = repairs.filter(
-            (r) => r.status === "completed",
-          ).length;
-          const completionRate =
-            totalRepairs > 0
-              ? Math.round((completedRepairs / totalRepairs) * 100)
-              : 0;
-
-          // 今日报修
-          const today = new Date().toDateString();
-          const todayRepairs = repairs.filter(
-            (r) => new Date(r.submitTime).toDateString() === today,
-          ).length;
-
-          // 平均响应时间（模拟数据）
-          const avgResponseTime = "2.5h";
-
-          // 满意度（模拟数据）
-          const satisfaction = "4.8";
-
-          // 更新统计卡片
-          document.querySelector(
-            ".stat-card:nth-child(1) .stat-number",
-          ).textContent = todayRepairs;
-          document.querySelector(
-            ".stat-card:nth-child(2) .stat-number",
-          ).textContent = `${completionRate}%`;
-          document.querySelector(
-            ".stat-card:nth-child(3) .stat-number",
-          ).textContent = avgResponseTime;
-          document.querySelector(
-            ".stat-card:nth-child(4) .stat-number",
-          ).textContent = satisfaction;
-
-          // 更新设施类型分布
-          updateFacilityTypeDistribution(repairs);
+              // 更新统计卡片
+              document.querySelector(
+                ".stat-card:nth-child(1) .stat-number",
+              ).textContent = stats.pendingRepairs;
+              document.querySelector(
+                ".stat-card:nth-child(2) .stat-number",
+              ).textContent = `${stats.completionRate}%`;
+              document.querySelector(
+                ".stat-card:nth-child(3) .stat-number",
+              ).textContent = stats.processingRepairs;
+              document.querySelector(
+                ".stat-card:nth-child(4) .stat-number",
+              ).textContent = stats.totalUsers;
+            }
+          } catch (error) {
+            console.error("加载统计数据失败:", error);
+          }
         }
 
         // 更新设施类型分布
@@ -1130,11 +1167,22 @@
         };
 
         // 公告管理功能
-        function loadNewsData() {
-          const news = JSON.parse(localStorage.getItem("news")) || [];
+        async function loadNewsData() {
           const tableBody = document.querySelector(
             "#news-manage .data-table tbody",
           );
+
+          // 从 API 获取新闻数据
+          let news = [];
+          try {
+            const result = await APIClient.getNews();
+            if (result && result.success) {
+              news = result.news || [];
+            }
+          } catch (error) {
+            console.error("加载新闻数据失败:", error);
+            news = [];
+          }
 
           // 清空表格
           tableBody.innerHTML = "";
@@ -1145,7 +1193,7 @@
             row.innerHTML = `
               <td>${item.id}</td>
               <td>${item.title}</td>
-              <td>${item.publishDate}</td>
+              <td>${new Date(item.created_at).toLocaleDateString()}</td>
               <td>
                 <button class="btn btn-sm btn-primary" onclick="editNews(${item.id})">
                   <i class="fas fa-edit"></i> 编辑
@@ -1160,57 +1208,73 @@
         }
 
         // 添加公告
-        function addNews() {
+        async function addNews() {
           const title = prompt("请输入公告标题:");
           if (title) {
-            const news = JSON.parse(localStorage.getItem("news")) || [];
-            const newId =
-              news.length > 0 ? Math.max(...news.map((n) => n.id)) + 1 : 1;
-            const newNews = {
-              id: newId,
-              title: title,
-              content: "",
-              publishDate: new Date().toISOString().split("T")[0],
-            };
-            news.push(newNews);
-            localStorage.setItem("news", JSON.stringify(news));
-            loadNewsData();
-            alert("公告添加成功");
+            const content = prompt("请输入公告内容:");
+            if (content) {
+              try {
+                const result = await APIClient.adminAddNews(title, content);
+                if (result && result.success) {
+                  loadNewsData();
+                  showMessage("公告添加成功", "success");
+                } else {
+                  showMessage(
+                    result && result.message ? result.message : "添加失败",
+                    "error",
+                  );
+                }
+              } catch (error) {
+                showMessage("添加过程中出现错误", "error");
+                console.error(error);
+              }
+            }
           }
         }
 
         // 编辑公告
         window.editNews = function (newsId) {
-          const news = JSON.parse(localStorage.getItem("news")) || [];
-          const item = news.find((n) => n.id === newsId);
-          if (item) {
-            const newTitle = prompt("请输入新的公告标题:", item.title);
-            if (newTitle) {
-              item.title = newTitle;
-              localStorage.setItem("news", JSON.stringify(news));
-              loadNewsData();
-              alert("公告编辑成功");
+          showMessage("编辑功能暂未实现", "info");
+        };
+
+        // 删除公告
+        window.deleteNews = async function (newsId) {
+          if (confirm("确定要删除这条公告吗?")) {
+            try {
+              const result = await APIClient.adminDeleteNews(newsId);
+              if (result && result.success) {
+                loadNewsData();
+                showMessage("公告删除成功", "success");
+              } else {
+                showMessage(
+                  result && result.message ? result.message : "删除失败",
+                  "error",
+                );
+              }
+            } catch (error) {
+              showMessage("删除过程中出现错误", "error");
+              console.error(error);
             }
           }
         };
 
-        // 删除公告
-        window.deleteNews = function (newsId) {
-          if (confirm("确定要删除这条公告吗?")) {
-            const news = JSON.parse(localStorage.getItem("news")) || [];
-            const filteredNews = news.filter((n) => n.id !== newsId);
-            localStorage.setItem("news", JSON.stringify(filteredNews));
-            loadNewsData();
-            alert("公告删除成功");
-          }
-        };
-
         // 用户管理功能
-        function loadUserData() {
-          const users = JSON.parse(localStorage.getItem("users")) || [];
+        async function loadUserData() {
           const tableBody = document.querySelector(
             "#user-manage .data-table tbody",
           );
+
+          // 从 API 获取用户数据
+          let users = [];
+          try {
+            const result = await APIClient.adminGetUsers();
+            if (result && result.success) {
+              users = result.users || [];
+            }
+          } catch (error) {
+            console.error("加载用户数据失败:", error);
+            users = [];
+          }
 
           // 清空表格
           tableBody.innerHTML = "";
@@ -1220,16 +1284,13 @@
             const row = document.createElement("tr");
 
             // 格式化注册时间
-            let registerTime = "未知";
-            if (user.createdAt) {
-              registerTime = new Date(user.createdAt).toLocaleString();
-            } else if (user.registerDate) {
-              registerTime = user.registerDate;
-            }
+            const registerTime = user.created_at
+              ? new Date(user.created_at).toLocaleString()
+              : "未知";
 
             row.innerHTML = `
               <td>${user.id || "未知"}</td>
-              <td>${user.name || user.username || "未知"}</td>
+              <td>${user.name || "未知"}</td>
               <td>${user.phone || "未知"}</td>
               <td>${registerTime}</td>
               <td>
@@ -1243,13 +1304,23 @@
         }
 
         // 删除用户
-        window.deleteUser = function (userId) {
+        window.deleteUser = async function (userId) {
           if (confirm("确定要删除这个用户吗?")) {
-            const users = JSON.parse(localStorage.getItem("users")) || [];
-            const filteredUsers = users.filter((u) => u.id !== userId);
-            localStorage.setItem("users", JSON.stringify(filteredUsers));
-            loadUserData();
-            alert("用户删除成功");
+            try {
+              const result = await APIClient.adminDeleteUser(userId);
+              if (result && result.success) {
+                loadUserData();
+                showMessage("用户删除成功", "success");
+              } else {
+                showMessage(
+                  result && result.message ? result.message : "删除失败",
+                  "error",
+                );
+              }
+            } catch (error) {
+              showMessage("删除过程中出现错误", "error");
+              console.error(error);
+            }
           }
         };
 

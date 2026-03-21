@@ -299,6 +299,62 @@ const APIClient = {
       body: JSON.stringify(data),
     });
   },
+
+  async adminLogin(username, password) {
+    if (!username || username.trim().length < 3) {
+      return { success: false, message: "用户名至少需要3个字符" };
+    }
+
+    if (!password || password.length < 6) {
+      return { success: false, message: "密码至少需要6个字符" };
+    }
+
+    return await apiRequest("/admin/login", {
+      method: "POST",
+      body: JSON.stringify({ username: username.trim(), password }),
+    });
+  },
+
+  async adminGetUsers() {
+    return await apiRequest("/admin/users");
+  },
+
+  async adminDeleteUser(userId) {
+    if (!userId) {
+      return { success: false, message: "用户ID不能为空" };
+    }
+    return await apiRequest(`/admin/users/${userId}`, {
+      method: "DELETE",
+    });
+  },
+
+  async adminAddNews(title, content) {
+    if (!title || title.trim().length < 5) {
+      return { success: false, message: "标题至少需要5个字符" };
+    }
+
+    if (!content || content.trim().length < 10) {
+      return { success: false, message: "内容至少需要10个字符" };
+    }
+
+    return await apiRequest("/admin/news", {
+      method: "POST",
+      body: JSON.stringify({ title: title.trim(), content: content.trim() }),
+    });
+  },
+
+  async adminDeleteNews(newsId) {
+    if (!newsId) {
+      return { success: false, message: "新闻ID不能为空" };
+    }
+    return await apiRequest(`/admin/news/${newsId}`, {
+      method: "DELETE",
+    });
+  },
+
+  async adminGetStats() {
+    return await apiRequest("/admin/stats");
+  },
 };
 
 // 导出工具函数供其他模块使用
