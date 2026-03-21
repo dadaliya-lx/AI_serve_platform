@@ -1,5 +1,5 @@
 {
-  "name": "city-service-backend",
+  "name": "city-public-service-platfom",
   "version": "1.0.0",
   "description": "Cloudflare Worker backend for city service platform",
   "main": "src/index.js",

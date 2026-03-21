@@ -1,7 +1,5 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import bcrypt from "bcryptjs";
-import jwtLib from "jsonwebtoken";
 
 const app = new Hono();
 
@@ -9,36 +7,124 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    credentials: true,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
   }),
 );
 
 const JWT_SECRET = "your-jwt-secret-key-change-in-production";
 
-// 生成 JWT Token
-function generateToken(userId) {
-  return jwtLib.sign({ userId }, JWT_SECRET, { expiresIn: "24h" });
+// 使用 Web Crypto API 进行密码哈希
+async function hashPassword(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + JWT_SECRET);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-// 生成唯一报修ID（使用随机字符串避免并发冲突）
-function generateRepairId() {
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `R${timestamp}${random}`;
+async function verifyPassword(password, hashedPassword) {
+  const hash = await hashPassword(password);
+  return hash === hashedPassword;
 }
 
-// 验证手机号格式
+// 使用 Web Crypto API 生成 JWT
+async function generateToken(userId) {
+  const header = { alg: "HS256", typ: "JWT" };
+  const payload = { userId, exp: Date.now() + 24 * 60 * 60 * 1000 };
+
+  const encoder = new TextEncoder();
+  const headerB64 = btoa(JSON.stringify(header));
+  const payloadB64 = btoa(JSON.stringify(payload));
+  const data = encoder.encode(`${headerB64}.${payloadB64}`);
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(JWT_SECRET),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const signature = await crypto.subtle.sign("HMAC", key, data);
+  const sigArray = Array.from(new Uint8Array(signature));
+  const sigB64 = btoa(String.fromCharCode(...sigArray));
+
+  return `${headerB64}.${payloadB64}.${sigB64}`;
+}
+
+async function verifyToken(token) {
+  try {
+    const [headerB64, payloadB64, sigB64] = token.split(".");
+    if (!headerB64 || !payloadB64 || !sigB64) return null;
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(`${headerB64}.${payloadB64}`);
+
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(JWT_SECRET),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+
+    const signature = Uint8Array.from(atob(sigB64), (c) => c.charCodeAt(0));
+    const isValid = await crypto.subtle.verify("HMAC", key, signature, data);
+
+    if (!isValid) return null;
+
+    const payload = JSON.parse(atob(payloadB64));
+    if (payload.exp < Date.now()) return null;
+
+    return payload;
+  } catch (error) {
+    return null;
+  }
+}
+
+// 健康检查接口
+app.get("/api/health", async (c) => {
+  return c.json({
+    success: true,
+    message: "服务正常运行",
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// 根路径测试
+app.get("/", async (c) => {
+  return c.json({
+    success: true,
+    message: "API 服务正常运行",
+    endpoints: [
+      "GET /api/health - 健康检查",
+      "POST /api/register - 用户注册",
+      "POST /api/login - 用户登录",
+      "GET /api/user/profile - 获取用户信息",
+      "POST /api/repairs - 提交报修",
+      "GET /api/repairs - 获取报修列表",
+    ],
+  });
+});
+
+// 测试路由
+app.get("/test", async (c) => {
+  return c.json({ success: true, message: "测试路由正常" });
+});
+
+// 工具函数：验证手机号
 function validatePhone(phone) {
   const phoneRegex = /^1[3-9]\d{9}$/;
   return phoneRegex.test(phone);
 }
 
-// 验证密码强度
+// 工具函数：验证密码强度
 function validatePassword(password) {
-  return password && password.length >= 6;
+  return password.length >= 6;
 }
 
-// 清理输入防止 XSS
+// 工具函数：清理输入防止 XSS
 function sanitizeInput(input) {
   if (typeof input !== "string") return input;
   return input
@@ -80,23 +166,16 @@ app.post("/api/register", async (c) => {
       return c.json({ success: false, message: "该手机号已注册" }, 409);
     }
 
-    // 清理输入
-    const safeName = sanitizeInput(name.trim());
-
     // 加密密码
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await hashPassword(password);
 
-    // 插入用户
-    const result = await db
+    // 创建用户
+    await db
       .prepare("INSERT INTO users (name, phone, password) VALUES (?, ?, ?)")
-      .bind(safeName, phone, hashedPassword)
+      .bind(sanitizeInput(name.trim()), phone, hashedPassword)
       .run();
 
-    return c.json({
-      success: true,
-      message: "注册成功",
-      userId: result.meta.last_row_id,
-    });
+    return c.json({ success: true, message: "注册成功" });
   } catch (error) {
     console.error("Register error:", error);
     return c.json({ success: false, message: "注册失败，请稍后重试" }, 500);
@@ -122,7 +201,7 @@ app.post("/api/login", async (c) => {
 
     // 查询用户
     const user = await db
-      .prepare("SELECT * FROM users WHERE phone = ?")
+      .prepare("SELECT id, name, phone, password FROM users WHERE phone = ?")
       .bind(phone)
       .first();
 
@@ -131,14 +210,14 @@ app.post("/api/login", async (c) => {
     }
 
     // 验证密码
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await verifyPassword(password, user.password);
 
     if (!isValidPassword) {
       return c.json({ success: false, message: "手机号或密码错误" }, 401);
     }
 
     // 生成 Token
-    const token = generateToken(user.id);
+    const token = await generateToken(user.id);
 
     return c.json({
       success: true,
@@ -147,7 +226,6 @@ app.post("/api/login", async (c) => {
         id: user.id,
         name: user.name,
         phone: user.phone,
-        avatar: user.avatar,
       },
     });
   } catch (error) {
@@ -167,13 +245,14 @@ app.get("/api/user/profile", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
-    const db = c.env.DB;
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
 
+    const db = c.env.DB;
     const user = await db
-      .prepare(
-        "SELECT id, name, phone, avatar, created_at FROM users WHERE id = ?",
-      )
+      .prepare("SELECT id, name, phone, created_at FROM users WHERE id = ?")
       .bind(decoded.userId)
       .first();
 
@@ -183,10 +262,7 @@ app.get("/api/user/profile", async (c) => {
 
     return c.json({ success: true, user });
   } catch (error) {
-    if (error.name === "TokenExpiredError") {
-      return c.json({ success: false, message: "登录已过期，请重新登录" }, 401);
-    }
-    console.error("Get profile error:", error);
+    console.error("Get user profile error:", error);
     return c.json({ success: false, message: "获取用户信息失败" }, 500);
   }
 });
@@ -202,38 +278,37 @@ app.put("/api/user/profile", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
+
     const db = c.env.DB;
     const body = await c.req.json();
 
-    // 验证输入
-    if (body.name && body.name.trim().length < 2) {
-      return c.json({ success: false, message: "姓名至少需要2个字符" }, 422);
+    // 构建更新字段
+    const updates = [];
+    const values = [];
+
+    if (body.name) {
+      updates.push("name = ?");
+      values.push(sanitizeInput(body.name.trim()));
     }
 
-    // 清理输入
-    const updates = {};
-    if (body.name) updates.name = sanitizeInput(body.name.trim());
-    if (body.avatar) updates.avatar = sanitizeInput(body.avatar.trim());
-
-    if (Object.keys(updates).length === 0) {
+    if (updates.length === 0) {
       return c.json({ success: false, message: "没有要更新的内容" }, 422);
     }
 
-    // 构建更新 SQL
-    const fields = Object.keys(updates)
-      .map((key) => `${key} = ?`)
-      .join(", ");
-    const values = Object.values(updates);
+    values.push(decoded.userId);
 
     await db
-      .prepare(`UPDATE users SET ${fields} WHERE id = ?`)
-      .bind(...values, decoded.userId)
+      .prepare(`UPDATE users SET ${updates.join(", ")} WHERE id = ?`)
+      .bind(...values)
       .run();
 
     return c.json({ success: true, message: "更新成功" });
   } catch (error) {
-    console.error("Update profile error:", error);
+    console.error("Update user profile error:", error);
     return c.json({ success: false, message: "更新失败" }, 500);
   }
 });
@@ -249,70 +324,43 @@ app.post("/api/repairs", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
+
     const db = c.env.DB;
     const body = await c.req.json();
 
-    // 验证必填项
-    if (!body.facility_type) {
-      return c.json({ success: false, message: "请选择设施类型" }, 422);
-    }
-
-    if (!body.damage_type) {
-      return c.json({ success: false, message: "请选择损坏类型" }, 422);
-    }
-
-    if (!body.location || body.location.trim().length < 5) {
-      return c.json(
-        { success: false, message: "请输入详细的位置信息（至少5个字符）" },
-        422,
-      );
-    }
-
-    if (!body.description || body.description.trim().length < 10) {
-      return c.json(
-        { success: false, message: "请详细描述问题（至少10个字符）" },
-        422,
-      );
-    }
-
     // 生成唯一报修ID
-    const repairId = generateRepairId();
+    function generateRepairId() {
+      const timestamp = Date.now().toString(36).toUpperCase();
+      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+      return `R${timestamp}${random}`;
+    }
 
-    // 清理输入
-    const safeFacilityType = sanitizeInput(body.facility_type);
-    const safeDamageType = sanitizeInput(body.damage_type);
-    const safeLocation = sanitizeInput(body.location.trim());
-    const safeDescription = sanitizeInput(body.description.trim());
-    const safeImage = body.image ? sanitizeInput(body.image) : null;
-
-    // 插入报修记录
+    // 创建报修记录
     await db
       .prepare(
-        `
-      INSERT INTO repairs (repair_id, user_id, facility_type, damage_type, location, description, image)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `,
+        "INSERT INTO repairs (repair_id, user_id, facility_type, damage_type, location, description, image, status, progress) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
       )
       .bind(
-        repairId,
+        generateRepairId(),
         decoded.userId,
-        safeFacilityType,
-        safeDamageType,
-        safeLocation,
-        safeDescription,
-        safeImage,
+        body.facility_type || null,
+        body.damage_type || null,
+        sanitizeInput(body.location || ""),
+        sanitizeInput(body.description || ""),
+        body.image || null,
+        "pending",
+        0,
       )
       .run();
 
-    return c.json({
-      success: true,
-      repair_id: repairId,
-      message: "报修提交成功",
-    });
+    return c.json({ success: true, message: "报修提交成功" });
   } catch (error) {
     console.error("Submit repair error:", error);
-    return c.json({ success: false, message: "提交失败，请稍后重试" }, 500);
+    return c.json({ success: false, message: "报修提交失败" }, 500);
   }
 });
 
@@ -327,17 +375,15 @@ app.get("/api/repairs", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
-    const db = c.env.DB;
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
 
+    const db = c.env.DB;
     const repairs = await db
       .prepare(
-        `
-      SELECT repair_id, facility_type, damage_type, location, status, progress, submit_time, update_time 
-      FROM repairs 
-      WHERE user_id = ? 
-      ORDER BY submit_time DESC
-    `,
+        "SELECT * FROM repairs WHERE user_id = ? ORDER BY submit_time DESC",
       )
       .bind(decoded.userId)
       .all();
@@ -361,21 +407,19 @@ app.get("/api/repairs/:repair_id", async (c) => {
   const repairId = c.req.param("repair_id");
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
-    const db = c.env.DB;
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
 
+    const db = c.env.DB;
     const repair = await db
-      .prepare(
-        `
-      SELECT * FROM repairs 
-      WHERE repair_id = ? AND user_id = ?
-    `,
-      )
+      .prepare("SELECT * FROM repairs WHERE repair_id = ? AND user_id = ?")
       .bind(repairId, decoded.userId)
       .first();
 
     if (!repair) {
-      return c.json({ success: false, message: "未找到该报修记录" }, 404);
+      return c.json({ success: false, message: "报修记录不存在" }, 404);
     }
 
     return c.json({ success: true, repair });
@@ -397,22 +441,12 @@ app.delete("/api/repairs/:repair_id", async (c) => {
   const repairId = c.req.param("repair_id");
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
-    const db = c.env.DB;
-
-    // 先检查记录是否存在且属于当前用户
-    const repair = await db
-      .prepare("SELECT id FROM repairs WHERE repair_id = ? AND user_id = ?")
-      .bind(repairId, decoded.userId)
-      .first();
-
-    if (!repair) {
-      return c.json(
-        { success: false, message: "未找到该报修记录或无权删除" },
-        404,
-      );
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
     }
 
+    const db = c.env.DB;
     await db
       .prepare("DELETE FROM repairs WHERE repair_id = ? AND user_id = ?")
       .bind(repairId, decoded.userId)
@@ -436,17 +470,15 @@ app.get("/api/notifications", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
-    const db = c.env.DB;
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
 
+    const db = c.env.DB;
     const notifications = await db
       .prepare(
-        `
-      SELECT id, title, content, is_read, created_at 
-      FROM notifications 
-      WHERE user_id = ? 
-      ORDER BY created_at DESC
-    `,
+        "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC",
       )
       .bind(decoded.userId)
       .all();
@@ -457,7 +489,7 @@ app.get("/api/notifications", async (c) => {
     });
   } catch (error) {
     console.error("Get notifications error:", error);
-    return c.json({ success: false, message: "获取通知失败" }, 500);
+    return c.json({ success: false, message: "获取通知列表失败" }, 500);
   }
 });
 
@@ -473,7 +505,11 @@ app.put("/api/notifications/:id/read", async (c) => {
   const notificationId = c.req.param("id");
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
+
     const db = c.env.DB;
 
     await db
@@ -501,7 +537,11 @@ app.get("/api/notifications/unread-count", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
+    if (!decoded) {
+      return c.json({ success: false, message: "Token 无效或已过期" }, 401);
+    }
+
     const db = c.env.DB;
 
     const result = await db
@@ -511,7 +551,7 @@ app.get("/api/notifications/unread-count", async (c) => {
       .bind(decoded.userId)
       .first();
 
-    return c.json({ success: true, count: result.count });
+    return c.json({ success: true, count: result?.count || 0 });
   } catch (error) {
     console.error("Get unread count error:", error);
     return c.json({ success: false, message: "获取未读数量失败" }, 500);
@@ -522,21 +562,14 @@ app.get("/api/notifications/unread-count", async (c) => {
 app.get("/api/news", async (c) => {
   try {
     const db = c.env.DB;
-
     const news = await db
-      .prepare(
-        `
-      SELECT id, title, content, publish_date 
-      FROM news 
-      ORDER BY publish_date DESC
-    `,
-      )
+      .prepare("SELECT * FROM news ORDER BY created_at DESC")
       .all();
 
     return c.json({ success: true, news: news.results || [] });
   } catch (error) {
     console.error("Get news error:", error);
-    return c.json({ success: false, message: "获取新闻失败" }, 500);
+    return c.json({ success: false, message: "获取新闻列表失败" }, 500);
   }
 });
 
@@ -551,7 +584,7 @@ app.get("/api/admin/repairs", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
 
     // 检查是否为管理员
@@ -594,7 +627,7 @@ app.put("/api/admin/repairs/:id", async (c) => {
   const repairId = c.req.param("id");
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
     const body = await c.req.json();
 
@@ -688,14 +721,14 @@ app.post("/api/admin/login", async (c) => {
     }
 
     // 验证密码
-    const isValidPassword = await bcrypt.compare(password, admin.password);
+    const isValidPassword = await verifyPassword(password, admin.password);
 
     if (!isValidPassword) {
       return c.json({ success: false, message: "用户名或密码错误" }, 401);
     }
 
     // 生成 Token（使用管理员 ID）
-    const token = generateToken(admin.id);
+    const token = await generateToken(admin.id);
 
     return c.json({
       success: true,
@@ -724,7 +757,7 @@ app.get("/api/admin/users", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
 
     // 检查是否为管理员
@@ -738,7 +771,9 @@ app.get("/api/admin/users", async (c) => {
     }
 
     const users = await db
-      .prepare("SELECT id, name, phone, created_at FROM users ORDER BY created_at DESC")
+      .prepare(
+        "SELECT id, name, phone, created_at FROM users ORDER BY created_at DESC",
+      )
       .all();
 
     return c.json({ success: true, users: users.results || [] });
@@ -760,7 +795,7 @@ app.delete("/api/admin/users/:id", async (c) => {
   const userId = c.req.param("id");
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
 
     // 检查是否为管理员
@@ -794,7 +829,7 @@ app.post("/api/admin/news", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
     const body = await c.req.json();
 
@@ -819,10 +854,12 @@ app.post("/api/admin/news", async (c) => {
 
     // 添加新闻
     await db
-      .prepare(
-        "INSERT INTO news (title, content, author_id) VALUES (?, ?, ?)"
+      .prepare("INSERT INTO news (title, content, author_id) VALUES (?, ?, ?)")
+      .bind(
+        sanitizeInput(body.title.trim()),
+        sanitizeInput(body.content.trim()),
+        decoded.userId,
       )
-      .bind(sanitizeInput(body.title.trim()), sanitizeInput(body.content.trim()), decoded.userId)
       .run();
 
     return c.json({ success: true, message: "添加成功" });
@@ -844,7 +881,7 @@ app.delete("/api/admin/news/:id", async (c) => {
   const newsId = c.req.param("id");
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
 
     // 检查是否为管理员
@@ -878,7 +915,7 @@ app.get("/api/admin/stats", async (c) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwtLib.verify(token, JWT_SECRET);
+    const decoded = await verifyToken(token);
     const db = c.env.DB;
 
     // 检查是否为管理员
@@ -896,13 +933,17 @@ app.get("/api/admin/stats", async (c) => {
       .prepare("SELECT COUNT(*) as count FROM repairs")
       .first();
     const completedRepairs = await db
-      .prepare("SELECT COUNT(*) as count FROM repairs WHERE status = 'completed'")
+      .prepare(
+        "SELECT COUNT(*) as count FROM repairs WHERE status = 'completed'",
+      )
       .first();
     const pendingRepairs = await db
       .prepare("SELECT COUNT(*) as count FROM repairs WHERE status = 'pending'")
       .first();
     const processingRepairs = await db
-      .prepare("SELECT COUNT(*) as count FROM repairs WHERE status = 'processing'")
+      .prepare(
+        "SELECT COUNT(*) as count FROM repairs WHERE status = 'processing'",
+      )
       .first();
     const totalUsers = await db
       .prepare("SELECT COUNT(*) as count FROM users")
@@ -928,15 +969,6 @@ app.get("/api/admin/stats", async (c) => {
     console.error("Admin get stats error:", error);
     return c.json({ success: false, message: "获取统计数据失败" }, 500);
   }
-});
-
-// 健康检查接口
-app.get("/api/health", async (c) => {
-  return c.json({
-    success: true,
-    message: "服务正常运行",
-    timestamp: new Date().toISOString(),
-  });
 });
 
 export default app;

@@ -1,11 +1,11 @@
-name = "city-service-backend"
+name = "city-public-service-platfom"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "city-service-db"
-database_id = "your-database-id-here"
+database_id = "5c848472-aa70-4b98-b5df-c61483b892fb"
 
 [vars]
 JWT_SECRET = "your-jwt-secret-key-change-in-production"
