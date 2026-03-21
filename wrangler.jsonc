@@ -1,0 +1,21 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "city-public-service-platfom",
+	"compatibility_date": "2026-03-17",
+	"observability": {
+		"enabled": true
+	},
+	"assets": {
+		"directory": "frontend"
+	},
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+			"binding": "city_service_db",
+			"database_name": "city-service-db",
+			"database_id": "5c848472-aa70-4b98-b5df-c61483b892fb"
+		}
+	]
+}
