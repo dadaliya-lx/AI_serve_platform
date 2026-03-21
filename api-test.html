@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200" />
+    <title>API测试 - 城市公共设施服务平台</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .test-container {
+        max-width: 800px;
+        margin: 50px auto;
+        padding: 30px;
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-md);
+      }
+      .test-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+      }
+      .test-section h3 {
+        color: var(--primary-color);
+        margin-bottom: 20px;
+      }
+      .test-result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: var(--border-radius);
+        font-family: "Courier New", monospace;
+        white-space: pre-wrap;
+      }
+      .test-result.success {
+        background: rgba(40, 167, 69, 0.1);
+        border-left: 4px solid var(--success-color);
+      }
+      .test-result.error {
+        background: rgba(220, 53, 69, 0.1);
+        border-left: 4px solid var(--error-color);
+      }
+      .test-result.info {
+        background: rgba(23, 162, 184, 0.1);
+        border-left: 4px solid var(--info-color);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container header-content">
+        <div class="logo"><i class="fas fa-city"></i> 城市公共设施服务平台</div>
+      </div>
+    </header>
+
+    <main>
+      <div class="container">
+        <div class="test-container">
+          <h1
+            style="
+              text-align: center;
+              color: var(--primary-color);
+              margin-bottom: 30px;
+            "
+          >
+            <i class="fas fa-network-wired"></i> API接口测试
+          </h1>
+
+          <div class="test-section">
+            <h3><i class="fas fa-key"></i> AccessToken测试</h3>
+            <button id="testTokenBtn" class="btn btn-primary">
+              测试获取AccessToken
+            </button>
+            <div
+              id="tokenResult"
+              class="test-result"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div class="test-section">
+            <h3><i class="fas fa-robot"></i> AI识别测试</h3>
+            <input type="file" id="testImageInput" accept="image/*" />
+            <button
+              id="testRecognizeBtn"
+              class="btn btn-primary"
+              style="margin-top: 10px; margin-left: 10px"
+            >
+              测试AI识别
+            </button>
+            <div
+              id="recognizeResult"
+              class="test-result"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div class="test-section">
+            <h3><i class="fas fa-database"></i> 存储测试</h3>
+            <button id="testStorageBtn" class="btn btn-primary">
+              测试存储功能
+            </button>
+            <div
+              id="storageResult"
+              class="test-result"
+              style="display: none"
+            ></div>
+          </div>
+
+          <div class="test-section">
+            <h3><i class="fas fa-info-circle"></i> 系统信息</h3>
+            <button id="sysInfoBtn" class="btn btn-primary">
+              查看系统信息
+            </button>
+            <div
+              id="sysInfoResult"
+              class="test-result"
+              style="display: none"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="js/storage-manager.js"></script>
+    <script src="js/ai-api-enhanced.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // 测试AccessToken
+        document
+          .getElementById("testTokenBtn")
+          .addEventListener("click", async function () {
+            const resultDiv = document.getElementById("tokenResult");
+            resultDiv.style.display = "block";
+            resultDiv.className = "test-result info";
+            resultDiv.textContent = "正在测试获取AccessToken...";
+
+            try {
+              // 模拟获取AccessToken的函数
+              const url = `https://aip.baidubce.com/oauth/2.0/token?grant_type=client_credentials&client_id=Artfb21Kqo4aOwXpgRtsfhcm&client_secret=2KsLUGF90AQ5pY35Lq4dX7oThpKXfvKm`;
+
+              const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+              });
+
+              const data = await response.json();
+
+              if (data.access_token) {
+                resultDiv.className = "test-result success";
+                resultDiv.textContent = `获取AccessToken成功！\n\nAccessToken: ${data.access_token}\n有效期: ${data.expires_in}秒\n令牌类型: ${data.token_type}`;
+              } else {
+                resultDiv.className = "test-result error";
+                resultDiv.textContent = `获取AccessToken失败：${data.error_description || "未知错误"}`;
+              }
+            } catch (error) {
+              resultDiv.className = "test-result error";
+              resultDiv.textContent = `测试失败：${error.message}`;
+            }
+          });
+
+        // 测试AI识别
+        document
+          .getElementById("testRecognizeBtn")
+          .addEventListener("click", async function () {
+            const fileInput = document.getElementById("testImageInput");
+            const resultDiv = document.getElementById("recognizeResult");
+
+            if (!fileInput.files.length) {
+              alert("请选择一张图片");
+              return;
+            }
+
+            resultDiv.style.display = "block";
+            resultDiv.className = "test-result info";
+            resultDiv.textContent = "正在测试AI识别...";
+
+            try {
+              const recognizeResult = await AI_API.recognizeFacility(
+                fileInput.files[0],
+              );
+
+              if (recognizeResult.success) {
+                resultDiv.className = "test-result success";
+                resultDiv.textContent = JSON.stringify(
+                  recognizeResult.data,
+                  null,
+                  2,
+                );
+              } else {
+                resultDiv.className = "test-result error";
+                resultDiv.textContent =
+                  recognizeResult.message || "识别服务暂时不可用，请稍后再试";
+              }
+            } catch (error) {
+              resultDiv.className = "test-result error";
+              resultDiv.textContent = "识别服务暂时不可用，请稍后再试";
+            }
+          });
+
+        // 测试存储功能
+        document
+          .getElementById("testStorageBtn")
+          .addEventListener("click", function () {
+            const resultDiv = document.getElementById("storageResult");
+            resultDiv.style.display = "block";
+
+            try {
+              // 测试存储
+              const testData = {
+                test: "测试数据",
+                timestamp: new Date().toISOString(),
+              };
+              const storageResult = StorageManager.set("test_data", testData);
+
+              // 测试读取
+              const readData = StorageManager.get("test_data");
+
+              // 测试存储空间
+              const storageInfo = StorageManager.getStorageInfo();
+
+              resultDiv.className = "test-result success";
+              resultDiv.textContent = `存储测试成功！\n\n存储数据: ${JSON.stringify(testData)}\n读取数据: ${JSON.stringify(readData)}\n\n存储信息:\n使用空间: ${storageInfo.usedSize} bytes\n最大空间: ${storageInfo.maxSize} bytes\n使用率: ${storageInfo.usagePercent}%\n项目数量: ${storageInfo.itemCount}`;
+            } catch (error) {
+              resultDiv.className = "test-result error";
+              resultDiv.textContent = `测试失败：${error.message}`;
+            }
+          });
+
+        // 查看系统信息
+        document
+          .getElementById("sysInfoBtn")
+          .addEventListener("click", function () {
+            const resultDiv = document.getElementById("sysInfoResult");
+            resultDiv.style.display = "block";
+            resultDiv.className = "test-result info";
+
+            const info = {
+              browser: navigator.userAgent,
+              language: navigator.language,
+              platform: navigator.platform,
+              localStorage: {
+                available: typeof localStorage !== "undefined",
+                length: localStorage.length,
+              },
+              screen: {
+                width: screen.width,
+                height: screen.height,
+              },
+              date: new Date().toISOString(),
+            };
+
+            resultDiv.textContent = JSON.stringify(info, null, 2);
+          });
+      });
+    </script>
+  </body>
+</html>

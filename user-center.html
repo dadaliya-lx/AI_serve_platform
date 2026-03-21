@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200" />
+    <title>用户中心 - 城市公共设施服务平台</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .page-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-color),
+          var(--secondary-color)
+        );
+        color: white;
+        padding: 30px 0;
+        margin-bottom: 30px;
+      }
+
+      .page-header h1 {
+        margin: 0;
+        font-size: 28px;
+      }
+
+      .records-section {
+        padding: 20px 0;
+      }
+
+      .section-title {
+        font-size: 22px;
+        color: var(--text-color);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-title i {
+        color: var(--primary-color);
+      }
+
+      .record-item {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+      }
+
+      .record-item:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+      }
+
+      .record-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .record-id {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .record-id i {
+        color: var(--primary-color);
+      }
+
+      .record-type {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+
+      .record-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-label {
+        font-size: 14px;
+        color: var(--light-text);
+        margin-bottom: 5px;
+      }
+
+      .detail-value {
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .record-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color);
+      }
+
+      .btn-sm {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--light-text);
+      }
+
+      .empty-state i {
+        font-size: 64px;
+        margin-bottom: 20px;
+        color: var(--border-color);
+      }
+
+      .empty-state h3 {
+        margin-bottom: 10px;
+        color: var(--text-color);
+      }
+
+      /* 通知中心样式 */
+      .notification-item {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition);
+        position: relative;
+        cursor: pointer;
+      }
+
+      .notification-item:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+      }
+
+      .notification-item.unread {
+        border-left: 4px solid var(--primary-color);
+        background-color: rgba(26, 86, 219, 0.05);
+      }
+
+      .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+      }
+
+      .notification-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+      }
+
+      .notification-time {
+        font-size: 14px;
+        color: var(--light-text);
+      }
+
+      .notification-content {
+        font-size: 14px;
+        color: var(--text-color);
+        line-height: 1.5;
+        margin: 0;
+      }
+
+      .unread-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+      }
+
+      .quick-actions {
+        margin-bottom: 30px;
+        display: flex;
+        gap: 15px;
+      }
+
+      .quick-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 24px;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 500;
+        transition: var(--transition);
+        text-decoration: none;
+      }
+
+      .quick-action-btn.primary {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .quick-action-btn.primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .quick-action-btn.secondary {
+        background-color: var(--border-color);
+        color: var(--text-color);
+      }
+
+      .quick-action-btn.secondary:hover {
+        background-color: var(--light-text);
+        color: white;
+      }
+
+      /* 详情模态框 */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 30px;
+        border-radius: var(--border-radius);
+        width: 90%;
+        max-width: 600px;
+        position: relative;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text-color);
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: var(--light-text);
+      }
+
+      .close-btn:hover {
+        color: var(--text-color);
+      }
+
+      .detail-row {
+        display: flex;
+        margin-bottom: 15px;
+        align-items: flex-start;
+      }
+
+      .detail-label {
+        width: 120px;
+        font-weight: 500;
+        color: var(--light-text);
+        flex-shrink: 0;
+      }
+
+      .detail-value {
+        flex: 1;
+        color: var(--text-color);
+        word-break: break-word;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container header-content">
+        <div class="logo"><i class="fas fa-city"></i> 城市公共设施服务平台</div>
+        <div class="header-right">
+          <div class="contact-info">
+            <span><i class="fas fa-phone"></i> 服务热线: 12319</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <nav>
+      <div class="container nav-container">
+        <button class="menu-toggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links">
+          <li>
+            <a href="index.html"><i class="fas fa-home"></i> 首页</a>
+          </li>
+          <li>
+            <a href="ai-upload.html"><i class="fas fa-robot"></i> AI智能报修</a>
+          </li>
+          <li>
+            <a href="repair.html"><i class="fas fa-tools"></i> 我要报修</a>
+          </li>
+          <li>
+            <a href="query.html"><i class="fas fa-search"></i> 进度查询</a>
+          </li>
+          <li>
+            <a href="news.html"><i class="fas fa-bullhorn"></i> 公告通知</a>
+          </li>
+          <li>
+            <a href="admin.html"
+              ><i class="fas fa-user-shield"></i> 管理员后台</a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div
+      class="page-header"
+      style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+    >
+      <div class="container">
+        <h1 style="text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2)">
+          <i class="fas fa-history"></i> 历史申报记录
+        </h1>
+      </div>
+    </div>
+
+    <main
+      style="
+        background: url(&quot;images/backgrounds/office-bg.jpg&quot;)
+          center/cover fixed no-repeat;
+        position: relative;
+        min-height: calc(100vh - 200px);
+      "
+    >
+      <div
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(255, 255, 255, 0.75);
+        "
+      ></div>
+      <div
+        class="container"
+        style="position: relative; z-index: 1; padding: 20px 0"
+      >
+        <div class="quick-actions">
+          <a
+            href="ai-upload.html"
+            class="quick-action-btn"
+            style="
+              background: linear-gradient(135deg, #667eea, #764ba2);
+              color: white;
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            "
+          >
+            <i class="fas fa-plus"></i> 新建报修
+          </a>
+          <button
+            id="notificationBtn"
+            class="quick-action-btn"
+            style="
+              background: linear-gradient(135deg, #f39c12, #e67e22);
+              color: white;
+              box-shadow: 0 4px 12px rgba(243, 156, 18, 0.4);
+            "
+          >
+            <i class="fas fa-bell"></i> 通知中心
+          </button>
+        </div>
+
+        <!-- 通知中心 -->
+        <div
+          id="notificationCenter"
+          class="card fade-in"
+          style="display: none; margin-bottom: 30px"
+        >
+          <h2 class="section-title"><i class="fas fa-bell"></i> 通知中心</h2>
+          <div id="notificationsList"></div>
+          <div
+            id="emptyNotifications"
+            class="empty-state"
+            style="display: none"
+          >
+            <i class="fas fa-bell-slash"></i>
+            <h3>暂无通知</h3>
+            <p>您还没有收到任何通知</p>
+          </div>
+        </div>
+
+        <div class="records-section">
+          <h2 class="section-title">
+            <i class="fas fa-list"></i> 我的报修记录
+          </h2>
+          <div id="recordsList"></div>
+          <div id="emptyState" class="empty-state" style="display: none">
+            <i class="fas fa-inbox"></i>
+            <h3>暂无报修记录</h3>
+            <p>您还没有提交过任何报修申请</p>
+            <a
+              href="ai-upload.html"
+              class="btn btn-primary"
+              style="margin-top: 20px"
+            >
+              <i class="fas fa-plus"></i> 提交第一个报修
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3><i class="fas fa-info-circle"></i> 关于我们</h3>
+            <p>
+              城市公共设施报修与治理服务平台，致力于提升城市公共设施的管理效率，
+              为市民提供便捷的报修渠道。
+            </p>
+          </div>
+          <div class="footer-section">
+            <h3><i class="fas fa-phone-alt"></i> 联系方式</h3>
+            <ul>
+              <li><i class="fas fa-phone"></i> 服务热线：12319</li>
+              <li><i class="fas fa-envelope"></i> 邮箱：service@city.gov.cn</li>
+              <li>
+                <i class="fas fa-map-marker-alt"></i> 地址：XX市XX区XX路XX号
+              </li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3><i class="fas fa-link"></i> 相关链接</h3>
+            <ul>
+              <li><a href="index.html">首页</a></li>
+              <li><a href="ai-upload.html">AI智能报修</a></li>
+              <li><a href="repair.html">我要报修</a></li>
+              <li><a href="query.html">进度查询</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <p>&copy; 2026 城市公共设施服务平台 版权所有</p>
+      </div>
+    </footer>
+
+    <!-- 详情模态框 -->
+    <div id="detailModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">报修详情</h2>
+          <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div id="modalBody">
+          <!-- 详情内容将通过JavaScript动态填充 -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/api-client.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", async function () {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("请先登录！");
+          window.location.href = "auth.html";
+          return;
+        }
+
+        loadUserRecords();
+      });
+
+      async function loadUserRecords() {
+        const recordsList = document.getElementById("recordsList");
+        const emptyState = document.getElementById("emptyState");
+
+        try {
+          const response = await APIClient.getRepairs();
+
+          // 确保repairs是一个数组
+          const repairs = Array.isArray(response) ? response : [];
+
+          if (repairs.length === 0) {
+            recordsList.innerHTML = "";
+            emptyState.style.display = "block";
+            return;
+          }
+
+          emptyState.style.display = "none";
+          recordsList.innerHTML = repairs
+            .map((repair) => createRecordHTML(repair))
+            .join("");
+        } catch (error) {
+          console.error("加载报修记录失败:", error);
+          showMessage("加载失败，请检查网络连接", "error");
+        }
+      }
+
+      function createRecordHTML(repair) {
+        const statusColors = {
+          pending: { bg: "#fff3cd", color: "#856404" },
+          accepted: { bg: "#d1ecf1", color: "#0c5460" },
+          processing: { bg: "#cce5ff", color: "#004085" },
+          completed: { bg: "#d4edda", color: "#155724" },
+          rejected: { bg: "#f8d7da", color: "#721c24" },
+        };
+
+        const statusTexts = {
+          pending: "待受理",
+          accepted: "已受理",
+          processing: "处理中",
+          completed: "已完成",
+          rejected: "已驳回",
+        };
+
+        const statusInfo = statusColors[repair.status] || statusColors.pending;
+
+        return `
+          <div class="record-item fade-in">
+            <div class="record-header">
+              <div class="record-id">
+                <i class="fas fa-ticket-alt"></i> ${repair.repair_id || repair.repairId}
+              </div>
+              <div class="record-type" style="background-color: ${statusInfo.bg}; color: ${statusInfo.color};">
+                <i class="fas fa-circle" style="font-size: 8px;"></i>
+                ${statusTexts[repair.status]}
+              </div>
+            </div>
+            <div class="record-details">
+              <div class="detail-item">
+                <span class="detail-label">设施类型</span>
+                <span class="detail-value">${repair.facility_type || repair.facilityType || "未指定"}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">损坏类型</span>
+                <span class="detail-value">${repair.damage_type || repair.damageType || "未指定"}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">位置信息</span>
+                <span class="detail-value">${repair.location || "未指定"}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">提交时间</span>
+                <span class="detail-value">${repair.submit_time || repair.submitTime}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">处理进度</span>
+                <span class="detail-value">${repair.progress || 0}%</span>
+              </div>
+            </div>
+            <div class="record-actions">
+              <button onclick="showDetail('${repair.repairId}')" class="btn btn-primary btn-sm">
+                <i class="fas fa-search"></i> 查看详情
+              </button>
+              ${
+                repair.status === "pending"
+                  ? `
+                <button onclick="deleteRecord('${repair.repairId}')" class="btn btn-error btn-sm">
+                  <i class="fas fa-trash"></i> 撤销申请
+                </button>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+        `;
+      }
+
+      async function showDetail(repairId) {
+        try {
+          const repair = await APIClient.getRepairDetail(repairId);
+
+          if (!repair || Object.keys(repair).length === 0) {
+            alert("未找到该报修记录！");
+            return;
+          }
+
+          const statusTexts = {
+            pending: "待受理",
+            accepted: "已受理",
+            processing: "处理中",
+            completed: "已完成",
+            rejected: "已驳回",
+          };
+
+          const modalBody = document.getElementById("modalBody");
+          modalBody.innerHTML = `
+            <div class="detail-row">
+              <span class="detail-label">报修编号</span>
+              <span class="detail-value">${repair.repair_id}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">设施类型</span>
+              <span class="detail-value">${repair.facility_type || "未指定"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">损坏类型</span>
+              <span class="detail-value">${repair.damage_type || "未指定"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">位置信息</span>
+              <span class="detail-value">${repair.location || "未指定"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">详细描述</span>
+              <span class="detail-value">${repair.description || "未提供"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">提交时间</span>
+              <span class="detail-value">${repair.submit_time}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">状态</span>
+              <span class="detail-value">${statusTexts[repair.status] || "未知"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">处理进度</span>
+              <span class="detail-value">${repair.progress || 0}%</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">管理员备注</span>
+              <span class="detail-value">${repair.admin_note || "暂无"}</span>
+            </div>
+          `;
+
+          document.getElementById("detailModal").style.display = "block";
+        } catch (error) {
+          console.error("获取报修详情失败:", error);
+          showMessage("获取详情失败，请检查网络连接", "error");
+        }
+      }
+
+      function closeModal() {
+        document.getElementById("detailModal").style.display = "none";
+      }
+
+      async function deleteRecord(repairId) {
+        if (!confirm("确定要撤销这条报修申请吗？")) {
+          return;
+        }
+
+        try {
+          const result = await APIClient.deleteRepair(repairId);
+          if (result.success) {
+            showMessage("申请已撤销！", "success");
+            loadUserRecords();
+          } else {
+            showMessage(result.message || "撤销失败", "error");
+          }
+        } catch (error) {
+          console.error("撤销申请失败:", error);
+          showMessage("撤销失败，请检查网络连接", "error");
+        }
+      }
+
+      // 点击模态框外部关闭
+      window.onclick = function (event) {
+        const modal = document.getElementById("detailModal");
+        if (event.target === modal) {
+          closeModal();
+        }
+      };
+
+      // 通知中心功能
+      document.addEventListener("DOMContentLoaded", function () {
+        const notificationBtn = document.getElementById("notificationBtn");
+        const notificationCenter =
+          document.getElementById("notificationCenter");
+
+        if (notificationBtn) {
+          notificationBtn.addEventListener("click", function () {
+            notificationCenter.style.display =
+              notificationCenter.style.display === "block" ? "none" : "block";
+            if (notificationCenter.style.display === "block") {
+              loadNotifications();
+            }
+          });
+        }
+      });
+
+      async function loadNotifications() {
+        const notificationsList = document.getElementById("notificationsList");
+        const emptyNotifications =
+          document.getElementById("emptyNotifications");
+
+        try {
+          const notifications = await APIClient.getNotifications();
+
+          if (!Array.isArray(notifications) || notifications.length === 0) {
+            notificationsList.innerHTML = "";
+            emptyNotifications.style.display = "block";
+            return;
+          }
+
+          emptyNotifications.style.display = "none";
+          notificationsList.innerHTML = notifications
+            .map((notification) => createNotificationHTML(notification))
+            .join("");
+        } catch (error) {
+          console.error("加载通知失败:", error);
+          showMessage("加载通知失败，请检查网络连接", "error");
+        }
+      }
+
+      function createNotificationHTML(notification) {
+        // 格式化时间
+        const formattedTime = new Date(notification.created_at).toLocaleString(
+          "zh-CN",
+          {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          },
+        );
+
+        return `
+          <div class="notification-item ${!notification.read ? "unread" : ""}" onclick="markAsRead('${notification.id}')">
+            <div class="notification-header">
+              <h3 class="notification-title">${notification.title}</h3>
+              <span class="notification-time">${formattedTime}</span>
+            </div>
+            <p class="notification-content">${notification.content}</p>
+            ${!notification.read ? '<div class="unread-indicator"></div>' : ""}
+          </div>
+        `;
+      }
+
+      async function markAsRead(notificationId) {
+        try {
+          const result = await APIClient.markNotificationRead(notificationId);
+          if (result.success) {
+            // 标记通知为已读
+            const notificationItem = document.querySelector(
+              `[onclick="markAsRead('${notificationId}')"]`,
+            );
+            if (notificationItem) {
+              notificationItem.classList.remove("unread");
+              const unreadIndicator =
+                notificationItem.querySelector(".unread-indicator");
+              if (unreadIndicator) {
+                unreadIndicator.remove();
+              }
+            }
+          }
+        } catch (error) {
+          console.error("标记通知已读失败:", error);
+        }
+      }
+    </script>
+  </body>
+</html>

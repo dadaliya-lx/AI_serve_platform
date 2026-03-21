@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200" />
+    <title>我要报修 - 城市公共设施服务平台</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <!-- 头部 -->
+    <header>
+      <div class="container header-content">
+        <div class="logo"><i class="fas fa-city"></i> 城市公共设施服务平台</div>
+        <div class="header-right">
+          <div class="contact-info">
+            <span><i class="fas fa-phone"></i> 服务热线: 12319</span>
+          </div>
+          <!-- 用户区域 -->
+          <div id="userArea" class="user-area"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 导航栏 -->
+    <nav>
+      <div class="container nav-container">
+        <button class="menu-toggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-links">
+          <li>
+            <a href="index.html"><i class="fas fa-home"></i> 首页</a>
+          </li>
+          <li>
+            <a href="ai-upload.html"><i class="fas fa-robot"></i> AI智能报修</a>
+          </li>
+          <li>
+            <a href="repair.html"><i class="fas fa-tools"></i> 我要报修</a>
+          </li>
+          <li>
+            <a href="query.html"><i class="fas fa-search"></i> 进度查询</a>
+          </li>
+          <li>
+            <a href="news.html"><i class="fas fa-bullhorn"></i> 公告通知</a>
+          </li>
+          <li>
+            <a href="admin.html"
+              ><i class="fas fa-user-shield"></i> 管理员后台</a
+            >
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- 头像选择弹窗 -->
+    <div id="avatarModal" class="avatar-modal">
+      <div class="avatar-modal-content">
+        <div class="avatar-modal-header">
+          <h3><i class="fas fa-user-circle"></i> 设置头像</h3>
+          <button class="avatar-modal-close" onclick="closeAvatarModal()">
+            &times;
+          </button>
+        </div>
+        <div class="avatar-upload-section">
+          <div class="current-avatar-preview">
+            <img
+              id="currentAvatarImg"
+              src="images/Avatar/209578cb286ca29f11de996cd7c34102.jpg"
+              alt="当前头像"
+            />
+          </div>
+          <div class="upload-controls">
+            <input
+              type="file"
+              id="avatarUpload"
+              accept="image/*"
+              style="display: none"
+            />
+            <button
+              class="btn btn-primary"
+              onclick="document.getElementById('avatarUpload').click()"
+            >
+              <i class="fas fa-upload"></i> 上传头像
+            </button>
+            <p class="upload-hint">支持 JPG、PNG 格式，建议尺寸 200x200</p>
+          </div>
+        </div>
+        <div class="avatar-modal-footer">
+          <button class="btn btn-secondary" onclick="closeAvatarModal()">
+            取消
+          </button>
+          <button class="btn btn-primary" onclick="confirmAvatarChange()">
+            确定
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <main
+      style="
+        background: url(&quot;images/backgrounds/architecture-bg.jpg&quot;)
+          center/cover fixed no-repeat;
+        position: relative;
+        min-height: calc(100vh - 120px);
+      "
+    >
+      <div
+        style="
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(255, 255, 255, 0.75);
+        "
+      ></div>
+      <div
+        class="container"
+        style="position: relative; z-index: 1; padding: 20px 0"
+      >
+        <h1
+          style="
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+          "
+        >
+          <i class="fas fa-tools"></i> 我要报修
+        </h1>
+
+        <div class="card fade-in">
+          <h2><i class="fas fa-clipboard-list"></i> 报修信息</h2>
+          <form id="repairForm">
+            <div class="form-group">
+              <label for="facilityType"
+                >设施类型
+                <span style="color: var(--error-color)">*</span></label
+              >
+              <select id="facilityType" name="facilityType" required>
+                <option value="">请选择设施类型</option>
+                <option value="路灯">路灯</option>
+                <option value="垃圾桶">垃圾桶</option>
+                <option value="公交站亭">公交站亭</option>
+                <option value="人行道">人行道</option>
+                <option value="消防栓">消防栓</option>
+                <option value="公共厕所">公共厕所</option>
+                <option value="健身设施">健身设施</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="damageType"
+                >损坏类型
+                <span style="color: var(--error-color)">*</span></label
+              >
+              <select id="damageType" name="damageType" required>
+                <option value="">请选择损坏类型</option>
+                <option value="损坏">损坏</option>
+                <option value="故障">故障</option>
+                <option value="缺失">缺失</option>
+                <option value="老化">老化</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="location"
+                >位置信息
+                <span style="color: var(--error-color)">*</span></label
+              >
+              <input
+                type="text"
+                id="location"
+                name="location"
+                placeholder="请输入详细位置，如：XX路XX号附近"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="description"
+                >详细描述
+                <span style="color: var(--error-color)">*</span></label
+              >
+              <textarea
+                id="description"
+                name="description"
+                rows="4"
+                placeholder="请详细描述损坏情况，如：路灯不亮、垃圾桶盖丢失等"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="contactName"
+                >联系人 <span style="color: var(--error-color)">*</span></label
+              >
+              <input
+                type="text"
+                id="contactName"
+                name="contactName"
+                placeholder="请输入联系人姓名"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="contactPhone"
+                >联系电话
+                <span style="color: var(--error-color)">*</span></label
+              >
+              <input
+                type="tel"
+                id="contactPhone"
+                name="contactPhone"
+                placeholder="请输入联系电话"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="images">上传图片（可选）</label>
+              <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>点击或拖拽图片到此处上传（最多3张）</p>
+                <input type="file" id="imageInput" accept="image/*" multiple />
+                <label for="imageInput">选择图片</label>
+              </div>
+              <div
+                id="imagePreviews"
+                style="
+                  margin-top: 20px;
+                  display: flex;
+                  flex-wrap: wrap;
+                  gap: 10px;
+                "
+              ></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane"></i> 提交报修
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 提交成功提示 -->
+        <div
+          id="successMessage"
+          class="card fade-in"
+          style="
+            margin-top: 30px;
+            display: none;
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid var(--success-color);
+          "
+        >
+          <h2 style="color: var(--success-color)">
+            <i class="fas fa-check-circle"></i> 提交成功
+          </h2>
+          <p id="successContent">您的报修申请已成功提交，我们将尽快处理。</p>
+          <div style="text-align: center; margin-top: 20px">
+            <a href="query.html" class="btn btn-primary">
+              <i class="fas fa-search"></i> 查询进度
+            </a>
+            <a
+              href="repair.html"
+              class="btn btn-secondary"
+              style="margin-left: 20px"
+            >
+              <i class="fas fa-redo"></i> 再次报修
+            </a>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- 页脚 -->
+    <footer>
+      <div class="container footer-content">
+        <div class="footer-section">
+          <h3>关于我们</h3>
+          <p>
+            基于AI视觉识别的城市公共设施报修与治理服务平台，致力于提高城市公共设施的管理效率和服务质量，为市民创造更美好的生活环境。
+          </p>
+        </div>
+        <div class="footer-section">
+          <h3>快速链接</h3>
+          <ul>
+            <li><a href="index.html">首页</a></li>
+            <li><a href="ai-upload.html">AI智能报修</a></li>
+            <li><a href="repair.html">我要报修</a></li>
+            <li><a href="query.html">进度查询</a></li>
+            <li><a href="news.html">公告通知</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>联系方式</h3>
+          <ul>
+            <li><i class="fas fa-phone"></i> 服务热线: 12319</li>
+            <li><i class="fas fa-envelope"></i> 邮箱: service@example.com</li>
+            <li>
+              <i class="fas fa-map-marker-alt"></i> 地址:
+              北京市朝阳区政务服务中心
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <p>&copy; 2026 城市公共设施服务平台 版权所有</p>
+      </div>
+    </footer>
+
+    <!-- 脚本 -->
+    <script src="js/main.js"></script>
+    <script>
+      // 页面加载完成后执行
+      document.addEventListener("DOMContentLoaded", function () {
+        const uploadArea = document.getElementById("uploadArea");
+        const imageInput = document.getElementById("imageInput");
+        const imagePreviews = document.getElementById("imagePreviews");
+        const repairForm = document.getElementById("repairForm");
+        const successMessage = document.getElementById("successMessage");
+        const successContent = document.getElementById("successContent");
+
+        // 存储上传的图片
+        let uploadedImages = [];
+
+        // 拖放功能
+        uploadArea.addEventListener("dragover", function (e) {
+          e.preventDefault();
+          uploadArea.classList.add("dragover");
+        });
+
+        uploadArea.addEventListener("dragleave", function () {
+          uploadArea.classList.remove("dragover");
+        });
+
+        uploadArea.addEventListener("drop", function (e) {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+
+          if (e.dataTransfer.files.length) {
+            handleFiles(e.dataTransfer.files);
+          }
+        });
+
+        // 点击上传
+        imageInput.addEventListener("change", function () {
+          if (this.files.length) {
+            handleFiles(this.files);
+          }
+        });
+
+        // 处理文件
+        function handleFiles(files) {
+          // 检查文件数量
+          if (uploadedImages.length + files.length > 3) {
+            showMessage("最多只能上传3张图片", "error");
+            return;
+          }
+
+          // 处理每个文件
+          Array.from(files).forEach((file) => {
+            // 检查文件类型
+            const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
+            if (!allowedTypes.includes(file.type)) {
+              showMessage("只支持JPG、PNG、GIF格式的图片", "error");
+              return;
+            }
+
+            // 检查文件大小
+            if (file.size > 5 * 1024 * 1024) {
+              showMessage("图片大小不能超过5MB", "error");
+              return;
+            }
+
+            // 预览图片
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const previewDiv = document.createElement("div");
+              previewDiv.style.position = "relative";
+              previewDiv.style.margin = "5px";
+
+              const img = document.createElement("img");
+              img.src = e.target.result;
+              img.style.width = "100px";
+              img.style.height = "100px";
+              img.style.objectFit = "cover";
+              img.style.borderRadius = "8px";
+              img.style.boxShadow = "0 2px 10px rgba(0, 0, 0, 0.1)";
+
+              const removeBtn = document.createElement("button");
+              removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+              removeBtn.style.position = "absolute";
+              removeBtn.style.top = "-10px";
+              removeBtn.style.right = "-10px";
+              removeBtn.style.width = "24px";
+              removeBtn.style.height = "24px";
+              removeBtn.style.border = "none";
+              removeBtn.style.borderRadius = "50%";
+              removeBtn.style.backgroundColor = "var(--error-color)";
+              removeBtn.style.color = "white";
+              removeBtn.style.cursor = "pointer";
+              removeBtn.style.display = "flex";
+              removeBtn.style.alignItems = "center";
+              removeBtn.style.justifyContent = "center";
+
+              // 移除图片
+              removeBtn.addEventListener("click", function () {
+                previewDiv.remove();
+                uploadedImages = uploadedImages.filter(
+                  (imgFile) => imgFile !== file,
+                );
+              });
+
+              previewDiv.appendChild(img);
+              previewDiv.appendChild(removeBtn);
+              imagePreviews.appendChild(previewDiv);
+              uploadedImages.push(file);
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+
+        // 提交表单
+        repairForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // 检查用户是否已登录
+          if (!AuthManager.isLoggedIn()) {
+            showMessage("请先登录后再提交报修", "warning");
+            setTimeout(() => {
+              window.location.href = "auth.html";
+            }, 1500);
+            return;
+          }
+
+          // 获取表单数据
+          const formData = new FormData(this);
+          const data = {};
+          for (let [key, value] of formData.entries()) {
+            data[key] = value;
+          }
+
+          // 显示加载动画
+          const submitBtn = this.querySelector('button[type="submit"]');
+          const originalText = submitBtn.innerHTML;
+          submitBtn.innerHTML = '<div class="loading"></div>';
+          submitBtn.disabled = true;
+
+          try {
+            // 生成唯一的报修编号
+            const repairId = "RP" + new Date().getTime();
+
+            // 准备报修数据
+            const repairData = {
+              repairId: repairId,
+              facilityType: data.facilityType,
+              damageType: data.damageType,
+              location: data.location,
+              description: data.description,
+              contactName: data.contactName,
+              contactPhone: data.contactPhone,
+              submitTime: formatDate(new Date().toISOString()),
+              updateTime: formatDate(new Date().toISOString()),
+              status: "pending",
+              progress: 0,
+              userId: AuthManager.getCurrentUserId(),
+              images: uploadedImages.map((img) => img.name),
+            };
+
+            // 从localStorage获取现有报修数据
+            const repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+
+            // 添加新的报修数据
+            repairs.push(repairData);
+
+            // 保存到localStorage
+            localStorage.setItem("repairs", JSON.stringify(repairs));
+
+            // 显示成功信息
+            successContent.innerHTML = `您的报修申请已成功提交，报修编号为：<strong>${repairId}</strong>，我们将尽快处理。<br><br>您可以在<a href="user-center.html" style="color: var(--primary-color); font-weight: bold;">用户中心</a>查看所有历史申报记录。`;
+            successMessage.style.display = "block";
+            repairForm.style.display = "none";
+          } catch (error) {
+            showMessage("提交过程中出现错误", "error");
+            console.error(error);
+          } finally {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+          }
+        });
+      });
+
+      let selectedAvatar = "";
+
+      document.addEventListener("DOMContentLoaded", function () {
+        renderUserArea();
+        setupDropdownToggle();
+        setupOutsideClick();
+      });
+
+      function renderUserArea() {
+        const userArea = document.getElementById("userArea");
+        if (!userArea) return;
+
+        // 检查是否通过API登录（使用token）
+        const token = localStorage.getItem("token");
+        const userStr = localStorage.getItem("user");
+
+        if (token && userStr) {
+          try {
+            const currentUser = JSON.parse(userStr);
+            const avatarUrl =
+              currentUser.avatar ||
+              "images/Avatar/209578cb286ca29f11de996cd7c34102.jpg";
+            userArea.innerHTML = `
+              <div class="user-dropdown">
+                <button class="user-avatar-btn" id="avatarBtn">
+                  <img src="${avatarUrl}" alt="头像" class="avatar-img" onerror="this.src='images/Avatar/209578cb286ca29f11de996cd7c34102.jpg'">
+                  <span>${currentUser.name}</span>
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                  <a href="user-center.html" class="dropdown-item">
+                    <i class="fas fa-user-circle"></i> 用户中心
+                  </a>
+                  <button class="dropdown-item" onclick="openChangeNameModal()">
+                    <i class="fas fa-edit"></i> 修改昵称
+                  </button>
+                  <button class="dropdown-item" onclick="openAvatarModal()">
+                    <i class="fas fa-camera"></i> 更换头像
+                  </button>
+                  <div class="dropdown-divider"></div>
+                  <button class="dropdown-item" onclick="localStorage.removeItem('token'); localStorage.removeItem('user'); window.location.reload();">
+                    <i class="fas fa-sign-out-alt"></i> 退出登录
+                  </button>
+                </div>
+              </div>
+            `;
+          } catch (error) {
+            console.error("解析用户数据失败:", error);
+            userArea.innerHTML = `
+              <a href="auth.html" class="user-avatar-btn">
+                <img src="images/Avatar/209578cb286ca29f11de996cd7c34102.jpg" alt="头像" class="avatar-img">
+                <span>登录/注册</span>
+              </a>
+            `;
+          }
+        } else if (AuthManager.isLoggedIn()) {
+          // 检查是否通过本地存储登录
+          const currentUser = AuthManager.getCurrentUser();
+          const avatarUrl =
+            currentUser.avatar ||
+            "images/Avatar/209578cb286ca29f11de996cd7c34102.jpg";
+          userArea.innerHTML = `
+            <div class="user-dropdown">
+              <button class="user-avatar-btn" id="avatarBtn">
+                <img src="${avatarUrl}" alt="头像" class="avatar-img" onerror="this.src='images/Avatar/209578cb286ca29f11de996cd7c34102.jpg'">
+                <span>${currentUser.name}</span>
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              <div class="dropdown-menu" id="dropdownMenu">
+                <a href="user-center.html" class="dropdown-item">
+                  <i class="fas fa-user-circle"></i> 用户中心
+                </a>
+                <button class="dropdown-item" onclick="openChangeNameModal()">
+                  <i class="fas fa-edit"></i> 修改昵称
+                </button>
+                <button class="dropdown-item" onclick="openAvatarModal()">
+                  <i class="fas fa-camera"></i> 更换头像
+                </button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item" onclick="AuthManager.logout()">
+                  <i class="fas fa-sign-out-alt"></i> 退出登录
+                </button>
+              </div>
+            </div>
+          `;
+        } else {
+          userArea.innerHTML = `
+            <a href="auth.html" class="user-avatar-btn">
+              <img src="images/Avatar/209578cb286ca29f11de996cd7c34102.jpg" alt="头像" class="avatar-img">
+              <span>登录/注册</span>
+            </a>
+          `;
+        }
+      }
+
+      function setupDropdownToggle() {
+        const avatarBtn = document.getElementById("avatarBtn");
+        const dropdownMenu = document.getElementById("dropdownMenu");
+
+        if (avatarBtn && dropdownMenu) {
+          avatarBtn.addEventListener("click", function (e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle("show");
+          });
+        }
+      }
+
+      function setupOutsideClick() {
+        document.addEventListener("click", function (e) {
+          const dropdownMenu = document.getElementById("dropdownMenu");
+          if (dropdownMenu && !e.target.closest(".user-dropdown")) {
+            dropdownMenu.classList.remove("show");
+          }
+        });
+      }
+
+      function openAvatarModal() {
+        const avatarModal = document.getElementById("avatarModal");
+        const currentAvatarImg = document.getElementById("currentAvatarImg");
+        const currentUser = AuthManager.getCurrentUser();
+
+        if (!avatarModal) return;
+
+        // 设置当前头像预览
+        const defaultAvatar =
+          "images/Avatar/209578cb286ca29f11de996cd7c34102.jpg";
+        const avatarUrl =
+          currentUser && currentUser.avatar
+            ? currentUser.avatar
+            : defaultAvatar;
+        currentAvatarImg.src = avatarUrl;
+
+        avatarModal.classList.add("show");
+        closeDropdown();
+
+        // 绑定文件上传事件
+        const avatarUpload = document.getElementById("avatarUpload");
+        avatarUpload.onchange = function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+              showMessage("图片大小不能超过2MB", "error");
+              return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+              currentAvatarImg.src = event.target.result;
+              selectedAvatar = event.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+      }
+
+      function closeAvatarModal() {
+        const avatarModal = document.getElementById("avatarModal");
+        if (avatarModal) {
+          avatarModal.classList.remove("show");
+        }
+      }
+
+      function confirmAvatarChange() {
+        const currentAvatarImg = document.getElementById("currentAvatarImg");
+        const avatarUrl = currentAvatarImg.src;
+
+        // 如果没有选择新头像，直接关闭弹窗
+        if (
+          !selectedAvatar &&
+          avatarUrl.includes("209578cb286ca29f11de996cd7c34102.jpg")
+        ) {
+          closeAvatarModal();
+          return;
+        }
+
+        const result = AuthManager.updateAvatar(avatarUrl);
+        if (result.success) {
+          showMessage("头像更换成功！", "success");
+          closeAvatarModal();
+          renderUserArea();
+          selectedAvatar = null; // 重置选择
+        } else {
+          showMessage(result.message, "error");
+        }
+      }
+
+      function openChangeNameModal() {
+        closeDropdown();
+        const currentUser = AuthManager.getCurrentUser();
+        const newName = prompt("请输入新的昵称：", currentUser.name);
+
+        if (newName && newName.trim()) {
+          const result = AuthManager.updateName(newName.trim());
+          if (result.success) {
+            showMessage("昵称修改成功！", "success");
+            renderUserArea();
+          } else {
+            showMessage(result.message, "error");
+          }
+        }
+      }
+
+      function closeDropdown() {
+        const dropdownMenu = document.getElementById("dropdownMenu");
+        if (dropdownMenu) {
+          dropdownMenu.classList.remove("show");
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>测试页面</title>
+  </head>
+  <body>
+    <h1>测试页面</h1>
+    <p>如果你能看到这个页面，说明服务器正常工作。</p>
+    <div id="result"></div>
+
+    <script>
+      document.getElementById("result").innerHTML = "JavaScript正常工作";
+      console.log("JavaScript正常工作");
+
+      // 测试main.js加载
+      const script1 = document.createElement("script");
+      script1.src = "js/main.js";
+      script1.onload = function () {
+        console.log("main.js加载成功");
+        document.getElementById("result").innerHTML += "<br>main.js加载成功";
+      };
+      script1.onerror = function () {
+        console.log("main.js加载失败");
+        document.getElementById("result").innerHTML += "<br>main.js加载失败";
+      };
+      document.body.appendChild(script1);
+
+      // 测试storage-manager.js加载
+      const script2 = document.createElement("script");
+      script2.src = "js/storage-manager.js";
+      script2.onload = function () {
+        console.log("storage-manager.js加载成功");
+        document.getElementById("result").innerHTML +=
+          "<br>storage-manager.js加载成功";
+      };
+      script2.onerror = function () {
+        console.log("storage-manager.js加载失败");
+        document.getElementById("result").innerHTML +=
+          "<br>storage-manager.js加载失败";
+      };
+      document.body.appendChild(script2);
+
+      // 测试ai-api-enhanced.js加载
+      const script3 = document.createElement("script");
+      script3.src = "js/ai-api-enhanced.js";
+      script3.onload = function () {
+        console.log("ai-api-enhanced.js加载成功");
+        document.getElementById("result").innerHTML +=
+          "<br>ai-api-enhanced.js加载成功";
+      };
+      script3.onerror = function () {
+        console.log("ai-api-enhanced.js加载失败");
+        document.getElementById("result").innerHTML +=
+          "<br>ai-api-enhanced.js加载失败";
+      };
+      document.body.appendChild(script3);
+    </script>
+  </body>
+</html>

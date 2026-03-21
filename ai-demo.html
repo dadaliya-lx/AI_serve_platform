@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200" />
+    <title>AI识别功能演示</title>
+    <style>
+      body {
+        font-family: "Microsoft YaHei", Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #1a56db, #0f3460);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 2.5em;
+        font-weight: 300;
+      }
+      .header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 1.1em;
+      }
+      .demo-section {
+        padding: 40px;
+      }
+      .demo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+      }
+      .demo-card {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 25px;
+        border: 2px solid #e2e8f0;
+        transition: all 0.3s ease;
+      }
+      .demo-card:hover {
+        border-color: #1a56db;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(26, 86, 219, 0.15);
+      }
+      .demo-card h3 {
+        color: #1a56db;
+        margin-top: 0;
+        font-size: 1.3em;
+      }
+      .demo-card p {
+        color: #64748b;
+        line-height: 1.6;
+      }
+      .feature-list {
+        list-style: none;
+        padding: 0;
+      }
+      .feature-list li {
+        padding: 8px 0;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+      }
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+      .feature-list li::before {
+        content: "✓";
+        color: #10b981;
+        font-weight: bold;
+        margin-right: 10px;
+        font-size: 1.2em;
+      }
+      .tech-specs {
+        background: #1e293b;
+        color: white;
+        padding: 30px;
+        border-radius: 12px;
+        margin: 30px 0;
+      }
+      .tech-specs h3 {
+        color: #60a5fa;
+        margin-top: 0;
+      }
+      .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .spec-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #60a5fa;
+      }
+      .spec-item strong {
+        color: #93c5fd;
+      }
+      .api-info {
+        background: #fef3c7;
+        border: 1px solid #f59e0b;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+      .api-info h4 {
+        color: #92400e;
+        margin-top: 0;
+      }
+      .api-config {
+        background: #f3f4f6;
+        border-radius: 8px;
+        padding: 15px;
+        font-family: "Courier New", monospace;
+        font-size: 0.9em;
+        border-left: 4px solid #1a56db;
+      }
+      .cta-section {
+        text-align: center;
+        padding: 40px;
+        background: linear-gradient(135deg, #1a56db, #0f3460);
+        color: white;
+      }
+      .cta-button {
+        display: inline-block;
+        background: white;
+        color: #1a56db;
+        padding: 15px 30px;
+        border-radius: 25px;
+        text-decoration: none;
+        font-weight: bold;
+        font-size: 1.1em;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      }
+      .mode-indicator {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8em;
+        font-weight: bold;
+        margin-left: 10px;
+      }
+      .mode-real {
+        background: #10b981;
+        color: white;
+      }
+      .mode-simulation {
+        background: #f59e0b;
+        color: #92400e;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-robot"></i> AI智能识别功能</h1>
+        <p>基于百度智能云的城市公共设施自动识别系统</p>
+      </div>
+
+      <div class="demo-section">
+        <h2 style="text-align: center; color: #1a56db; margin-bottom: 30px">
+          功能特性
+        </h2>
+
+        <div class="demo-grid">
+          <div class="demo-card">
+            <h3><i class="fas fa-camera"></i> 智能图像识别</h3>
+            <p>
+              自动识别公共设施类型，包括路灯、垃圾桶、公交站亭、人行道、消防栓、井盖、健身设施等。
+            </p>
+            <ul class="feature-list">
+              <li>高精度物体检测</li>
+              <li>多场景适配</li>
+              <li>实时识别反馈</li>
+            </ul>
+          </div>
+
+          <div class="demo-card">
+            <h3><i class="fas fa-tools"></i> 损坏情况分析</h3>
+            <p>
+              智能分析设施损坏程度，自动判断损坏类型：损坏、缺失、故障、老化等。
+            </p>
+            <ul class="feature-list">
+              <li>损坏类型分类</li>
+              <li>严重程度评估</li>
+              <li>维修建议生成</li>
+            </ul>
+          </div>
+
+          <div class="demo-card">
+            <h3><i class="fas fa-lightbulb"></i> 智能建议生成</h3>
+            <p>
+              根据识别结果自动生成维修建议，提供专业的处理方案和预计维修时间。
+            </p>
+            <ul class="feature-list">
+              <li>个性化建议</li>
+              <li>维修时间预估</li>
+              <li>优先级评估</li>
+            </ul>
+          </div>
+
+          <div class="demo-card">
+            <h3><i class="fas fa-mobile-alt"></i> 移动端适配</h3>
+            <p>
+              完全响应式设计，支持手机、平板、电脑等多种设备，随时随地进行报修。
+            </p>
+            <ul class="feature-list">
+              <li>响应式布局</li>
+              <li>触摸优化</li>
+              <li>离线支持</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="tech-specs">
+          <h3><i class="fas fa-cogs"></i> 技术规格</h3>
+          <div class="spec-grid">
+            <div class="spec-item">
+              <strong>识别引擎：</strong><br />
+              百度智能云图像识别API
+            </div>
+            <div class="spec-item">
+              <strong>识别精度：</strong><br />
+              置信度 > 85%
+            </div>
+            <div class="spec-item">
+              <strong>响应时间：</strong><br />
+              平均 < 3秒
+            </div>
+            <div class="spec-item">
+              <strong>支持格式：</strong><br />
+              JPG, PNG, GIF
+            </div>
+            <div class="spec-item">
+              <strong>最大尺寸：</strong><br />
+              5MB
+            </div>
+            <div class="spec-item">
+              <strong>支持设施：</strong><br />
+              7大类公共设施
+            </div>
+          </div>
+        </div>
+
+        <div class="api-info">
+          <h4><i class="fas fa-key"></i> API配置信息</h4>
+          <div class="api-config">
+            <strong>API Key:</strong> Artfb21Kqo4aOwXpgRtsfhcm<br />
+            <strong>Secret Key:</strong> 2KsLUGF90AQ5pY35Lq4dX7oThpKXfvKm<br />
+            <strong>API类型:</strong> 百度智能云图像识别高级版
+          </div>
+          <p style="margin-top: 15px; color: #92400e">
+            <i class="fas fa-info-circle"></i>
+            系统支持<span class="mode-indicator mode-real">真实API</span>和<span
+              class="mode-indicator mode-simulation"
+              >模拟模式</span
+            >， 确保在网络问题或API限制时仍能正常演示。
+          </p>
+        </div>
+
+        <div style="text-align: center; margin: 40px 0">
+          <h3 style="color: #1a56db; margin-bottom: 20px">识别流程演示</h3>
+          <div
+            style="
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              flex-wrap: wrap;
+              gap: 20px;
+            "
+          >
+            <div style="text-align: center">
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  background: #1a56db;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 24px;
+                  margin: 0 auto 10px;
+                "
+              >
+                <i class="fas fa-upload"></i>
+              </div>
+              <h4>上传图片</h4>
+              <p style="color: #64748b; font-size: 14px">
+                拍摄或选择设施损坏照片
+              </p>
+            </div>
+            <div style="font-size: 24px; color: #1a56db">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div style="text-align: center">
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  background: #1a56db;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 24px;
+                  margin: 0 auto 10px;
+                "
+              >
+                <i class="fas fa-brain"></i>
+              </div>
+              <h4>AI识别</h4>
+              <p style="color: #64748b; font-size: 14px">
+                自动识别设施和损坏类型
+              </p>
+            </div>
+            <div style="font-size: 24px; color: #1a56db">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div style="text-align: center">
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  background: #1a56db;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 24px;
+                  margin: 0 auto 10px;
+                "
+              >
+                <i class="fas fa-file-alt"></i>
+              </div>
+              <h4>生成报告</h4>
+              <p style="color: #64748b; font-size: 14px">
+                自动生成报修信息和建议
+              </p>
+            </div>
+            <div style="font-size: 24px; color: #1a56db">
+              <i class="fas fa-arrow-right"></i>
+            </div>
+            <div style="text-align: center">
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  background: #10b981;
+                  border-radius: 50%;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 24px;
+                  margin: 0 auto 10px;
+                "
+              >
+                <i class="fas fa-check"></i>
+              </div>
+              <h4>提交报修</h4>
+              <p style="color: #64748b; font-size: 14px">一键提交报修申请</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-section">
+        <h2 style="margin-top: 0">立即体验AI智能识别</h2>
+        <p style="font-size: 1.1em; margin-bottom: 30px; opacity: 0.9">
+          上传一张公共设施损坏的照片，让AI为您自动识别和分析
+        </p>
+        <a href="ai-upload.html" class="cta-button">
+          <i class="fas fa-rocket"></i> 开始体验
+        </a>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  </body>
+</html>

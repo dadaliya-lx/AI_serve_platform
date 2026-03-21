@@ -1,0 +1,1347 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1200" />
+    <title>管理员后台 - 城市公共设施服务平台</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    />
+    <style>
+      .admin-login {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: url("https://picsum.photos/id/1018/1920/1080") center/cover
+          no-repeat;
+        background-attachment: fixed;
+        padding: 20px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+      }
+
+      .admin-login::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.25);
+        z-index: 1;
+      }
+
+      .login-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+        animation: fadeInUp 0.6s ease-out;
+        position: relative;
+        z-index: 2;
+        backdrop-filter: blur(10px);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 10000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+
+      .modal-content {
+        background-color: white;
+        margin: 10% auto;
+        padding: 30px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        position: relative;
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .modal-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+      }
+
+      .close-btn:hover {
+        color: #333;
+      }
+
+      .detail-row {
+        display: flex;
+        margin-bottom: 15px;
+        align-items: flex-start;
+      }
+
+      .detail-label {
+        width: 120px;
+        font-weight: 500;
+        color: #666;
+        flex-shrink: 0;
+      }
+
+      .detail-value {
+        flex: 1;
+        color: #333;
+        word-break: break-word;
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 登录页面 -->
+    <div id="loginPage" class="admin-login">
+      <div class="login-container">
+        <div class="login-header">
+          <i class="fas fa-user-shield"></i>
+          <h2>管理员登录</h2>
+          <p>城市公共设施服务平台</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <div class="form-group">
+            <label for="username">用户名</label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              placeholder="请输入管理员用户名"
+            />
+          </div>
+          <div class="form-group">
+            <label for="password">密码</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              placeholder="请输入密码"
+            />
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 20px">
+            <button type="submit" class="btn btn-primary" style="flex: 1">
+              登录
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              style="flex: 1"
+              onclick="window.location.href = 'index.html'"
+            >
+              <i class="fas fa-arrow-left"></i> 返回
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 后台管理页面 -->
+    <div id="adminPage" style="display: none">
+      <!-- 顶部导航 -->
+      <header class="admin-header">
+        <div class="header-left">
+          <h1><i class="fas fa-cogs"></i> 后台管理系统</h1>
+        </div>
+        <div class="header-right">
+          <span id="adminName">管理员</span>
+          <button id="logoutBtn" class="btn btn-secondary">
+            <i class="fas fa-sign-out-alt"></i> 退出
+          </button>
+        </div>
+      </header>
+
+      <!-- 侧边导航 -->
+      <div class="admin-container">
+        <aside class="admin-sidebar">
+          <nav class="sidebar-nav">
+            <ul>
+              <li>
+                <a href="javascript:void(0)" class="nav-item active" data-target="dashboard">
+                  <i class="fas fa-chart-bar"></i> 数据概览
+                </a>
+              </li>
+              <li>
+                <a href="javascript:void(0)" class="nav-item" data-target="repair-manage">
+                  <i class="fas fa-tools"></i> 报修管理
+                </a>
+              </li>
+              <li>
+                <a href="javascript:void(0)" class="nav-item" data-target="news-manage">
+                  <i class="fas fa-bullhorn"></i> 公告管理
+                </a>
+              </li>
+              <li>
+                <a href="javascript:void(0)" class="nav-item" data-target="user-manage">
+                  <i class="fas fa-users"></i> 用户管理
+                </a>
+              </li>
+              <li>
+                <a href="javascript:void(0)" class="nav-item" data-target="system-setting">
+                  <i class="fas fa-cog"></i> 系统设置
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="admin-content">
+          <!-- 数据概览 -->
+          <div id="dashboard" class="content-section active">
+            <h2><i class="fas fa-chart-bar"></i> 数据概览</h2>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-ticket-alt"></i>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-number">128</div>
+                  <div class="stat-label">今日报修</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-number">95%</div>
+                  <div class="stat-label">完成率</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-number">2.5h</div>
+                  <div class="stat-label">平均响应时间</div>
+                </div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-icon">
+                  <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-info">
+                  <div class="stat-number">4.8</div>
+                  <div class="stat-label">满意度</div>
+                </div>
+              </div>
+            </div>
+            <div class="chart-container">
+              <div class="chart-card">
+                <h3>报修趋势</h3>
+                <div class="chart-placeholder">
+                  <i
+                    class="fas fa-chart-line"
+                    style="font-size: 48px; color: #ccc"
+                  ></i>
+                  <p>报修趋势图表</p>
+                </div>
+              </div>
+              <div class="chart-card">
+                <h3>设施类型分布</h3>
+                <div class="chart-placeholder">
+                  <i
+                    class="fas fa-chart-pie"
+                    style="font-size: 48px; color: #ccc"
+                  ></i>
+                  <p>设施类型分布图表</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 报修管理 -->
+          <div id="repair-manage" class="content-section">
+            <h2><i class="fas fa-tools"></i> 报修管理</h2>
+            <div class="filter-bar">
+              <div class="filter-item">
+                <label>状态：</label>
+                <select id="statusFilter">
+                  <option value="">全部</option>
+                  <option value="pending">待处理</option>
+                  <option value="processing">处理中</option>
+                  <option value="completed">已完成</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label>设施类型：</label>
+                <select id="facilityFilter">
+                  <option value="">全部</option>
+                  <option value="路灯">路灯</option>
+                  <option value="垃圾桶">垃圾桶</option>
+                  <option value="公交站亭">公交站亭</option>
+                  <option value="人行道">人行道</option>
+                  <option value="健身设施">健身设施</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <input
+                  type="text"
+                  id="searchInput"
+                  placeholder="搜索报修编号"
+                />
+                <button class="btn btn-primary" id="searchBtn">
+                  <i class="fas fa-search"></i> 搜索
+                </button>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>报修编号</th>
+                    <th>设施类型</th>
+                    <th>损坏类型</th>
+                    <th>地址</th>
+                    <th>描述</th>
+                    <th>报修时间</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>RP20260301001</td>
+                    <td>路灯</td>
+                    <td>灯泡损坏</td>
+                    <td>中心城区中山路123号</td>
+                    <td>路灯不亮，影响夜间通行</td>
+                    <td>2026-03-01 09:15</td>
+                    <td><span class="status-badge pending">待处理</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 处理
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>RP20260301002</td>
+                    <td>垃圾桶</td>
+                    <td>垃圾桶盖丢失</td>
+                    <td>人民公园北门</td>
+                    <td>垃圾桶盖子不见了，垃圾暴露在外</td>
+                    <td>2026-03-01 10:30</td>
+                    <td><span class="status-badge processing">处理中</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 处理
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>RP20260301003</td>
+                    <td>公交站亭</td>
+                    <td>玻璃破损</td>
+                    <td>文化路公交站</td>
+                    <td>站亭玻璃被砸碎，存在安全隐患</td>
+                    <td>2026-03-01 11:45</td>
+                    <td><span class="status-badge completed">已完成</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-secondary">
+                        <i class="fas fa-eye"></i> 查看
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>RP20260301004</td>
+                    <td>人行道</td>
+                    <td>地砖松动</td>
+                    <td>和平路与解放路交叉口</td>
+                    <td>人行道地砖松动，容易绊倒行人</td>
+                    <td>2026-03-01 13:20</td>
+                    <td><span class="status-badge pending">待处理</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 处理
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>RP20260301005</td>
+                    <td>健身设施</td>
+                    <td>器材损坏</td>
+                    <td>体育公园健身区</td>
+                    <td>健身器材螺丝松动，存在安全隐患</td>
+                    <td>2026-03-01 14:50</td>
+                    <td><span class="status-badge processing">处理中</span></td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 处理
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination">
+              <button class="btn btn-sm btn-secondary">上一页</button>
+              <button class="btn btn-sm btn-primary">1</button>
+              <button class="btn btn-sm btn-secondary">2</button>
+              <button class="btn btn-sm btn-secondary">3</button>
+              <button class="btn btn-sm btn-secondary">下一页</button>
+            </div>
+          </div>
+
+          <!-- 公告管理 -->
+          <div id="news-manage" class="content-section">
+            <h2><i class="fas fa-bullhorn"></i> 公告管理</h2>
+            <div class="action-bar">
+              <button class="btn btn-primary">
+                <i class="fas fa-plus"></i> 添加公告
+              </button>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>标题</th>
+                    <th>发布时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>关于开展城市公共设施安全检查的通知</td>
+                    <td>2026-03-01</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>公共设施报修流程优化通知</td>
+                    <td>2026-02-20</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>AI智能报修系统上线公告</td>
+                    <td>2026-02-10</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>关于加强公共设施维护管理的通知</td>
+                    <td>2026-01-25</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>5</td>
+                    <td>2026年第一季度公共设施维修计划</td>
+                    <td>2026-01-10</td>
+                    <td>
+                      <button class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit"></i> 编辑
+                      </button>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 用户管理 -->
+          <div id="user-manage" class="content-section">
+            <h2><i class="fas fa-users"></i> 用户管理</h2>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>用户ID</th>
+                    <th>用户名</th>
+                    <th>联系方式</th>
+                    <th>注册时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>U001</td>
+                    <td>张三</td>
+                    <td>138****1234</td>
+                    <td>2026-02-01</td>
+                    <td>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>U002</td>
+                    <td>李四</td>
+                    <td>139****5678</td>
+                    <td>2026-02-05</td>
+                    <td>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>U003</td>
+                    <td>王五</td>
+                    <td>137****9012</td>
+                    <td>2026-02-10</td>
+                    <td>
+                      <button class="btn btn-sm btn-error">
+                        <i class="fas fa-trash"></i> 删除
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 系统设置 -->
+          <div id="system-setting" class="content-section">
+            <h2><i class="fas fa-cog"></i> 系统设置</h2>
+            <div class="settings-grid">
+              <div class="setting-card">
+                <h3>基本设置</h3>
+                <form>
+                  <div class="form-group">
+                    <label>系统名称</label>
+                    <input type="text" value="城市公共设施服务平台" />
+                  </div>
+                  <div class="form-group">
+                    <label>服务热线</label>
+                    <input type="text" value="12319" />
+                  </div>
+                  <div class="form-group">
+                    <label>系统邮箱</label>
+                    <input type="email" value="service@example.com" />
+                  </div>
+                  <button type="submit" class="btn btn-primary">
+                    保存设置
+                  </button>
+                </form>
+              </div>
+              <div class="setting-card">
+                <h3>维修设置</h3>
+                <form>
+                  <div class="form-group">
+                    <label>一般报修响应时间</label>
+                    <input type="text" value="24小时" />
+                  </div>
+                  <div class="form-group">
+                    <label>紧急报修响应时间</label>
+                    <input type="text" value="2小时" />
+                  </div>
+                  <div class="form-group">
+                    <label>一般报修完成时间</label>
+                    <input type="text" value="3个工作日" />
+                  </div>
+                  <button type="submit" class="btn btn-primary">
+                    保存设置
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- 报修详情模态框 -->
+    <div id="repairDetailModal" class="modal">
+      <div class="modal-content" style="max-width: 800px">
+        <div class="modal-header">
+          <h2 class="modal-title">报修详情</h2>
+          <button class="close-btn" onclick="closeRepairModal()">
+            &times;
+          </button>
+        </div>
+        <div id="repairModalBody">
+          <!-- 详情内容将通过JavaScript动态填充 -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" onclick="closeRepairModal()">
+            关闭
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 脚本 -->
+    <script src="js/main.js"></script>
+    <script>
+      // 页面加载完成后执行
+      document.addEventListener("DOMContentLoaded", function () {
+        const loginPage = document.getElementById("loginPage");
+        const adminPage = document.getElementById("adminPage");
+        const loginForm = document.getElementById("loginForm");
+        const logoutBtn = document.getElementById("logoutBtn");
+        const navItems = document.querySelectorAll(".nav-item");
+        const contentSections = document.querySelectorAll(".content-section");
+
+        // 检查登录状态
+        const isLoggedIn = localStorage.getItem("adminLoggedIn") === "true";
+        if (isLoggedIn) {
+          loginPage.style.display = "none";
+          adminPage.style.display = "block";
+          document.getElementById("adminName").textContent = "admin";
+
+          // 登录后加载数据
+          loadRepairData();
+          updateDashboardStats();
+          initFilterListeners();
+          loadNewsData();
+          initNewsListeners();
+          loadUserData();
+          initSystemSettings();
+        }
+
+        // 登录表单提交
+        loginForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+
+          // 模拟登录验证
+          if (username === "admin" && password === "admin123") {
+            loginPage.style.display = "none";
+            adminPage.style.display = "block";
+            document.getElementById("adminName").textContent = username;
+
+            // 存储登录状态
+            localStorage.setItem("adminLoggedIn", "true");
+
+            // 登录后加载数据
+            loadRepairData();
+            updateDashboardStats();
+            initFilterListeners();
+            loadNewsData();
+            initNewsListeners();
+            loadUserData();
+            initSystemSettings();
+          } else {
+            alert("用户名或密码错误");
+          }
+        });
+
+        // 退出登录
+        logoutBtn.addEventListener("click", function () {
+          // 清除登录状态
+          localStorage.removeItem("adminLoggedIn");
+
+          // 跳转到用户界面
+          window.location.href = "index.html";
+        });
+
+        // 侧边导航切换
+        if (navItems.length > 0 && contentSections.length > 0) {
+          navItems.forEach((item) => {
+            item.addEventListener("click", function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              // 移除所有导航项的active类
+              navItems.forEach((nav) => nav.classList.remove("active"));
+              // 添加当前导航项的active类
+              this.classList.add("active");
+
+              // 获取目标内容区域
+              const target = this.getAttribute("data-target");
+
+              // 隐藏所有内容区域
+              contentSections.forEach((section) =>
+                section.classList.remove("active"),
+              );
+              // 显示目标内容区域
+              const targetSection = document.getElementById(target);
+              if (targetSection) {
+                targetSection.classList.add("active");
+              }
+
+              // 如果切换到报修管理或数据概览，重新加载数据
+              if (target === "repair-manage") {
+                loadRepairData();
+              } else if (target === "dashboard") {
+                updateDashboardStats();
+              } else if (target === "news-manage") {
+                loadNewsData();
+              } else if (target === "user-manage") {
+                loadUserData();
+              } else if (target === "system-setting") {
+                initSystemSettings();
+              }
+            });
+          });
+        }
+
+        // 加载报修数据
+        function loadRepairData() {
+          let repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+          const tableBody = document.querySelector(
+            "#repair-manage .data-table tbody",
+          );
+
+          // 获取筛选条件
+          const statusFilter = document.getElementById("statusFilter").value;
+          const facilityFilter =
+            document.getElementById("facilityFilter").value;
+          const searchInput = document.getElementById("searchInput");
+          const searchTerm = searchInput.value.trim();
+
+          // 应用筛选
+          if (statusFilter) {
+            repairs = repairs.filter(
+              (repair) => repair.status === statusFilter,
+            );
+          }
+          if (facilityFilter) {
+            repairs = repairs.filter(
+              (repair) => repair.facilityType === facilityFilter,
+            );
+          }
+
+          // 应用搜索
+          if (searchTerm) {
+            repairs = repairs.filter((repair) =>
+              repair.repairId.includes(searchTerm),
+            );
+            // 搜索完成后清空搜索输入框
+            searchInput.value = "";
+          }
+
+          // 清空表格
+          tableBody.innerHTML = "";
+
+          // 生成表格行
+          repairs.forEach((repair) => {
+            const row = document.createElement("tr");
+
+            // 获取状态文本和类名
+            const statusInfo = getStatusInfo(repair.status);
+
+            row.innerHTML = `
+                        <td>${repair.repairId}</td>
+                        <td>${repair.facilityType}</td>
+                        <td>${repair.damageType}</td>
+                        <td>${repair.address || "-"}</td>
+                        <td>${repair.description || "-"}</td>
+                        <td>${new Date(repair.submitTime).toLocaleString()}</td>
+                        <td><span class="status-badge ${repair.status}">${statusInfo.text}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" onclick="showRepairDetail('${repair.repairId}')">
+                                <i class="fas fa-eye"></i> 查看详情
+                            </button>
+                        </td>
+                    `;
+
+            tableBody.appendChild(row);
+          });
+        }
+
+        // 为筛选控件添加事件监听器
+        function initFilterListeners() {
+          const statusFilter = document.getElementById("statusFilter");
+          const facilityFilter = document.getElementById("facilityFilter");
+          const searchBtn = document.getElementById("searchBtn");
+
+          if (statusFilter) {
+            statusFilter.addEventListener("change", loadRepairData);
+          }
+          if (facilityFilter) {
+            facilityFilter.addEventListener("change", loadRepairData);
+          }
+          if (searchBtn) {
+            searchBtn.addEventListener("click", loadRepairData);
+          }
+        }
+
+        // 为公告管理添加事件监听器
+        function initNewsListeners() {
+          const addNewsBtn = document.querySelector(
+            "#news-manage .action-bar button",
+          );
+          if (addNewsBtn) {
+            addNewsBtn.addEventListener("click", addNews);
+          }
+        }
+
+        // 更新数据概览统计
+        function updateDashboardStats() {
+          const repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+
+          // 计算统计数据
+          const totalRepairs = repairs.length;
+          const completedRepairs = repairs.filter(
+            (r) => r.status === "completed",
+          ).length;
+          const completionRate =
+            totalRepairs > 0
+              ? Math.round((completedRepairs / totalRepairs) * 100)
+              : 0;
+
+          // 今日报修
+          const today = new Date().toDateString();
+          const todayRepairs = repairs.filter(
+            (r) => new Date(r.submitTime).toDateString() === today,
+          ).length;
+
+          // 平均响应时间（模拟数据）
+          const avgResponseTime = "2.5h";
+
+          // 满意度（模拟数据）
+          const satisfaction = "4.8";
+
+          // 更新统计卡片
+          document.querySelector(
+            ".stat-card:nth-child(1) .stat-number",
+          ).textContent = todayRepairs;
+          document.querySelector(
+            ".stat-card:nth-child(2) .stat-number",
+          ).textContent = `${completionRate}%`;
+          document.querySelector(
+            ".stat-card:nth-child(3) .stat-number",
+          ).textContent = avgResponseTime;
+          document.querySelector(
+            ".stat-card:nth-child(4) .stat-number",
+          ).textContent = satisfaction;
+
+          // 更新设施类型分布
+          updateFacilityTypeDistribution(repairs);
+        }
+
+        // 更新设施类型分布
+        function updateFacilityTypeDistribution(repairs) {
+          const facilityTypes = {};
+
+          // 统计各设施类型的报修数量
+          repairs.forEach((repair) => {
+            const type = repair.facilityType;
+            facilityTypes[type] = (facilityTypes[type] || 0) + 1;
+          });
+
+          // 生成设施类型分布HTML
+          const distributionHtml = Object.entries(facilityTypes)
+            .map(([type, count]) => {
+              const percentage =
+                repairs.length > 0
+                  ? Math.round((count / repairs.length) * 100)
+                  : 0;
+              return `
+                        <div style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span>${type}</span>
+                                <span>${count} (${percentage}%)</span>
+                            </div>
+                            <div style="height: 8px; background-color: #e0e0e0; border-radius: 4px;">
+                                <div style="height: 100%; background-color: var(--primary-color); border-radius: 4px; width: ${percentage}%;"></div>
+                            </div>
+                        </div>
+                    `;
+            })
+            .join("");
+
+          // 更新图表占位符
+          const chartPlaceholder = document.querySelector(
+            ".chart-card:nth-child(2) .chart-placeholder",
+          );
+          chartPlaceholder.innerHTML = `
+                    <h4 style="margin-bottom: 15px;">设施类型分布</h4>
+                    ${distributionHtml}
+                `;
+        }
+
+        // 获取状态信息
+        function getStatusInfo(status) {
+          switch (status) {
+            case "pending":
+              return { text: "待受理", color: "#ffc107" };
+            case "accepted":
+              return { text: "已受理", color: "#17a2b8" };
+            case "processing":
+              return { text: "处理中", color: "#1a56db" };
+            case "completed":
+              return { text: "已完成", color: "#28a745" };
+            case "rejected":
+              return { text: "已驳回", color: "#dc3545" };
+            default:
+              return { text: "未知", color: "#6c757d" };
+          }
+        }
+
+        // 显示报修详情
+        window.showRepairDetail = function (repairId) {
+          const repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+          const repair = repairs.find((r) => r.repairId === repairId);
+
+          if (!repair) {
+            alert("未找到该报修记录！");
+            return;
+          }
+
+          // 获取用户信息
+          const users = JSON.parse(localStorage.getItem("users")) || [];
+          const user = users.find((u) => u.id === repair.userId);
+
+          const statusTexts = {
+            pending: "待受理",
+            accepted: "已受理",
+            processing: "处理中",
+            completed: "已完成",
+            rejected: "已驳回",
+          };
+
+          const modalBody = document.getElementById("repairModalBody");
+
+          let imageHtml = "";
+          if (repair.image) {
+            imageHtml = `
+              <div class="detail-row">
+                <span class="detail-label">照片</span>
+                <div class="detail-value">
+                  <img src="${repair.image}" alt="报修照片" style="max-width: 100%; max-height: 300px; border-radius: 8px; border: 1px solid #ddd;">
+                </div>
+              </div>
+            `;
+          }
+
+          modalBody.innerHTML = `
+            <div class="detail-row">
+              <span class="detail-label">报修编号</span>
+              <span class="detail-value">${repair.repairId}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">设施类型</span>
+              <span class="detail-value">${repair.facilityType || "未指定"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">损坏类型</span>
+              <span class="detail-value">${repair.damageType || "未指定"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">地址</span>
+              <span class="detail-value">${repair.address || repair.location || "未指定"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">详细描述</span>
+              <span class="detail-value">${repair.description || "未提供"}</span>
+            </div>
+            ${imageHtml}
+            <div class="detail-row">
+              <span class="detail-label">报修人姓名</span>
+              <span class="detail-value">${user ? user.name : "未知"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">报修人电话</span>
+              <span class="detail-value">${user ? user.phone : "未知"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">提交时间</span>
+              <span class="detail-value">${new Date(repair.submitTime).toLocaleString()}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">状态</span>
+              <span class="detail-value">${statusTexts[repair.status] || "未知"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">处理进度</span>
+              <span class="detail-value">${repair.progress || 0}%</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">处理人员</span>
+              <span class="detail-value">${repair.handler || "未分配"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">处理意见</span>
+              <span class="detail-value">${repair.remark || "暂无"}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">更新时间</span>
+              <span class="detail-value">${repair.updateTime ? new Date(repair.updateTime).toLocaleString() : "未更新"}</span>
+            </div>
+            <div class="modal-actions" style="border-top: none; padding-top: 20px; margin-top: 20px;">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <label>状态：</label>
+                <select id="statusSelect" style="padding: 8px; border-radius: 4px; border: 1px solid #ddd;">
+                  <option value="pending" ${repair.status === "pending" ? "selected" : ""}>待受理</option>
+                  <option value="accepted" ${repair.status === "accepted" ? "selected" : ""}>已受理</option>
+                  <option value="processing" ${repair.status === "processing" ? "selected" : ""}>处理中</option>
+                  <option value="completed" ${repair.status === "completed" ? "selected" : ""}>已完成</option>
+                  <option value="rejected" ${repair.status === "rejected" ? "selected" : ""}>已驳回</option>
+                </select>
+                <button class="btn btn-primary" onclick="updateRepairStatus('${repair.repairId}')">更新状态</button>
+              </div>
+            </div>
+          `;
+
+          document.getElementById("repairDetailModal").style.display = "block";
+        };
+
+        // 更新报修状态
+        window.updateRepairStatus = function (repairId) {
+          const repairs = JSON.parse(localStorage.getItem("repairs")) || [];
+          const repair = repairs.find((r) => r.repairId === repairId);
+
+          if (!repair) {
+            alert("未找到该报修记录！");
+            return;
+          }
+
+          const statusSelect = document.getElementById("statusSelect");
+          const newStatus = statusSelect.value;
+
+          // 更新状态和时间
+          repair.status = newStatus;
+          repair.updateTime = new Date().toISOString();
+
+          // 根据状态更新进度
+          switch (newStatus) {
+            case "pending":
+              repair.progress = 0;
+              break;
+            case "accepted":
+              repair.progress = 25;
+              break;
+            case "processing":
+              repair.progress = 50;
+              break;
+            case "completed":
+              repair.progress = 100;
+              break;
+            case "rejected":
+              repair.progress = 0;
+              break;
+          }
+
+          // 保存到localStorage
+          localStorage.setItem("repairs", JSON.stringify(repairs));
+
+          // 重新加载数据
+          loadRepairData();
+          updateDashboardStats();
+
+          // 刷新详情显示
+          showRepairDetail(repairId);
+
+          alert("状态更新成功");
+        };
+
+        // 关闭报修详情模态框
+        window.closeRepairModal = function () {
+          document.getElementById("repairDetailModal").style.display = "none";
+        };
+
+        // 点击模态框外部关闭
+        window.onclick = function (event) {
+          const modal = document.getElementById("repairDetailModal");
+          if (event.target === modal) {
+            closeRepairModal();
+          }
+        };
+
+        // 公告管理功能
+        function loadNewsData() {
+          const news = JSON.parse(localStorage.getItem("news")) || [];
+          const tableBody = document.querySelector(
+            "#news-manage .data-table tbody",
+          );
+
+          // 清空表格
+          tableBody.innerHTML = "";
+
+          // 生成表格行
+          news.forEach((item) => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+              <td>${item.id}</td>
+              <td>${item.title}</td>
+              <td>${item.publishDate}</td>
+              <td>
+                <button class="btn btn-sm btn-primary" onclick="editNews(${item.id})">
+                  <i class="fas fa-edit"></i> 编辑
+                </button>
+                <button class="btn btn-sm btn-error" onclick="deleteNews(${item.id})">
+                  <i class="fas fa-trash"></i> 删除
+                </button>
+              </td>
+            `;
+            tableBody.appendChild(row);
+          });
+        }
+
+        // 添加公告
+        function addNews() {
+          const title = prompt("请输入公告标题:");
+          if (title) {
+            const news = JSON.parse(localStorage.getItem("news")) || [];
+            const newId =
+              news.length > 0 ? Math.max(...news.map((n) => n.id)) + 1 : 1;
+            const newNews = {
+              id: newId,
+              title: title,
+              content: "",
+              publishDate: new Date().toISOString().split("T")[0],
+            };
+            news.push(newNews);
+            localStorage.setItem("news", JSON.stringify(news));
+            loadNewsData();
+            alert("公告添加成功");
+          }
+        }
+
+        // 编辑公告
+        window.editNews = function (newsId) {
+          const news = JSON.parse(localStorage.getItem("news")) || [];
+          const item = news.find((n) => n.id === newsId);
+          if (item) {
+            const newTitle = prompt("请输入新的公告标题:", item.title);
+            if (newTitle) {
+              item.title = newTitle;
+              localStorage.setItem("news", JSON.stringify(news));
+              loadNewsData();
+              alert("公告编辑成功");
+            }
+          }
+        };
+
+        // 删除公告
+        window.deleteNews = function (newsId) {
+          if (confirm("确定要删除这条公告吗?")) {
+            const news = JSON.parse(localStorage.getItem("news")) || [];
+            const filteredNews = news.filter((n) => n.id !== newsId);
+            localStorage.setItem("news", JSON.stringify(filteredNews));
+            loadNewsData();
+            alert("公告删除成功");
+          }
+        };
+
+        // 用户管理功能
+        function loadUserData() {
+          const users = JSON.parse(localStorage.getItem("users")) || [];
+          const tableBody = document.querySelector(
+            "#user-manage .data-table tbody",
+          );
+
+          // 清空表格
+          tableBody.innerHTML = "";
+
+          // 生成表格行
+          users.forEach((user) => {
+            const row = document.createElement("tr");
+
+            // 格式化注册时间
+            let registerTime = "未知";
+            if (user.createdAt) {
+              registerTime = new Date(user.createdAt).toLocaleString();
+            } else if (user.registerDate) {
+              registerTime = user.registerDate;
+            }
+
+            row.innerHTML = `
+              <td>${user.id || "未知"}</td>
+              <td>${user.name || user.username || "未知"}</td>
+              <td>${user.phone || "未知"}</td>
+              <td>${registerTime}</td>
+              <td>
+                <button class="btn btn-sm btn-error" onclick="deleteUser('${user.id}')">
+                  <i class="fas fa-trash"></i> 删除
+                </button>
+              </td>
+            `;
+            tableBody.appendChild(row);
+          });
+        }
+
+        // 删除用户
+        window.deleteUser = function (userId) {
+          if (confirm("确定要删除这个用户吗?")) {
+            const users = JSON.parse(localStorage.getItem("users")) || [];
+            const filteredUsers = users.filter((u) => u.id !== userId);
+            localStorage.setItem("users", JSON.stringify(filteredUsers));
+            loadUserData();
+            alert("用户删除成功");
+          }
+        };
+
+        // 系统设置功能
+        function initSystemSettings() {
+          // 加载设置
+          const settings = JSON.parse(
+            localStorage.getItem("systemSettings"),
+          ) || {
+            systemName: "城市公共设施服务平台",
+            serviceHotline: "12319",
+            systemEmail: "service@example.com",
+            normalResponseTime: "24小时",
+            emergencyResponseTime: "2小时",
+            normalCompletionTime: "3个工作日",
+          };
+
+          // 填充表单
+          const systemNameInput = document.querySelector(
+            "#system-setting input[value='城市公共设施服务平台']",
+          );
+          if (systemNameInput) systemNameInput.value = settings.systemName;
+
+          const serviceHotlineInput = document.querySelector(
+            "#system-setting input[value='12319']",
+          );
+          if (serviceHotlineInput)
+            serviceHotlineInput.value = settings.serviceHotline;
+
+          const systemEmailInput = document.querySelector(
+            "#system-setting input[value='service@example.com']",
+          );
+          if (systemEmailInput) systemEmailInput.value = settings.systemEmail;
+
+          const normalResponseTimeInput = document.querySelector(
+            "#system-setting input[value='24小时']",
+          );
+          if (normalResponseTimeInput)
+            normalResponseTimeInput.value = settings.normalResponseTime;
+
+          const emergencyResponseTimeInput = document.querySelector(
+            "#system-setting input[value='2小时']",
+          );
+          if (emergencyResponseTimeInput)
+            emergencyResponseTimeInput.value = settings.emergencyResponseTime;
+
+          const normalCompletionTimeInput = document.querySelector(
+            "#system-setting input[value='3个工作日']",
+          );
+          if (normalCompletionTimeInput)
+            normalCompletionTimeInput.value = settings.normalCompletionTime;
+
+          // 为表单添加提交事件监听器
+          const settingForms = document.querySelectorAll(
+            "#system-setting form",
+          );
+          settingForms.forEach((form) => {
+            form.addEventListener("submit", function (e) {
+              e.preventDefault();
+
+              // 收集设置
+              const updatedSettings = {
+                systemName: document.querySelector(
+                  "#system-setting input[value='城市公共设施服务平台']",
+                ).value,
+                serviceHotline: document.querySelector(
+                  "#system-setting input[value='12319']",
+                ).value,
+                systemEmail: document.querySelector(
+                  "#system-setting input[value='service@example.com']",
+                ).value,
+                normalResponseTime: document.querySelector(
+                  "#system-setting input[value='24小时']",
+                ).value,
+                emergencyResponseTime: document.querySelector(
+                  "#system-setting input[value='2小时']",
+                ).value,
+                normalCompletionTime: document.querySelector(
+                  "#system-setting input[value='3个工作日']",
+                ).value,
+              };
+
+              // 保存设置
+              localStorage.setItem(
+                "systemSettings",
+                JSON.stringify(updatedSettings),
+              );
+              alert("设置保存成功");
+            });
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

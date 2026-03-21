@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试页面</h1>
+    
+    <div class="test-section success">
+        <h2>基本结构测试</h2>
+        <p>页面加载成功！</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>CSS 测试</h2>
+        <p>如果看到绿色背景，说明 CSS 加载成功。</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>JavaScript 测试</h2>
+        <p id="js-test">点击按钮测试 JavaScript</p>
+        <button onclick="document.getElementById('js-test').innerHTML = 'JavaScript 执行成功！'">测试 JS</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>资源文件测试</h2>
+        <p>检查以下资源是否存在：</p>
+        <ul>
+            <li>CSS 文件: <a href="css/style.css">css/style.css</a></li>
+            <li>JS 文件: <a href="js/main.js">js/main.js</a></li>
+            <li>头像图片: <a href="images/Avatar/209578cb286ca29f11de996cd7c34102.jpg">images/Avatar/209578cb286ca29f11de996cd7c34102.jpg</a></li>
+            <li>背景图片: <a href="images/backgrounds/city-bg.jpg">images/backgrounds/city-bg.jpg</a></li>
+        </ul>
+    </div>
+</body>
+</html>
