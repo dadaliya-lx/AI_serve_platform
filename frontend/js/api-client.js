@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = "https://city-public-service-platfom.2213499332.workers.dev/api";
 
 async function apiRequest(url, options = {}) {
   const defaultOptions = {
