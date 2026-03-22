@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完整功能测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+        }
+        .content {
+            padding: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .config-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .result.error {
+            border-left-color: #f44336;
+            background-color: #ffebee;
+        }
+        .result.success {
+            border-left-color: #4CAF50;
+            background-color: #e8f5e9;
+        }
+        .result.info {
+            border-left-color: #2196F3;
+            background-color: #e3f2fd;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online {
+            background-color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+        .status-offline {
+            background-color: #f44336;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.3s;
+        }
+        .tab:hover {
+            color: #667eea;
+        }
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 城市公共服务平台 - 完整功能测试</h1>
+            <p>本地开发环境测试工具</p>
+        </div>
+        
+        <div class="content">
+            <div class="config-info">
+                <strong>📋 配置信息：</strong><br>
+                <span class="status-indicator" id="status-indicator"></span>
+                后端地址：<span id="api-url">http://127.0.0.1:3000/api</span><br>
+                前端地址：<span id="frontend-url"></span>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('register')">注册测试</div>
+                <div class="tab" onclick="switchTab('login')">登录测试</div>
+                <div class="tab" onclick="switchTab('health')">健康检查</div>
+            </div>
+
+            <div id="register-tab" class="tab-content active">
+                <div class="section">
+                    <h2>📝 用户注册测试</h2>
+                    <div class="form-group">
+                        <label for="reg-name">姓名：</label>
+                        <input type="text" id="reg-name" value="测试用户" placeholder="请输入姓名">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-phone">手机号：</label>
+                        <input type="text" id="reg-phone" value="13800138000" placeholder="请输入手机号">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">密码：</label>
+                        <input type="password" id="reg-password" value="123456" placeholder="请输入密码">
+                    </div>
+                    <button id="reg-btn" onclick="testRegister()">测试注册接口</button>
+                    <div id="reg-result" class="result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div id="login-tab" class="tab-content">
+                <div class="section">
+                    <h2>🔐 用户登录测试</h2>
+                    <div class="form-group">
+                        <label for="login-phone">手机号：</label>
+                        <input type="text" id="login-phone" value="13800138000" placeholder="请输入手机号">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">密码：</label>
+                        <input type="password" id="login-password" value="123456" placeholder="请输入密码">
+                    </div>
+                    <button id="login-btn" onclick="testLogin()">测试登录接口</button>
+                    <div id="login-result" class="result" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div id="health-tab" class="tab-content">
+                <div class="section">
+                    <h2>🏥 健康检查测试</h2>
+                    <button id="health-btn" onclick="testHealth()">测试健康检查</button>
+                    <div id="health-result" class="result" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = "http://127.0.0.1:3000/api";
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function init() {
+            document.getElementById("api-url").textContent = API_BASE_URL;
+            document.getElementById("frontend-url").textContent = window.location.origin;
+            console.log("页面已加载");
+            console.log("API_BASE_URL:", API_BASE_URL);
+            checkServerStatus();
+        }
+
+        async function checkServerStatus() {
+            const indicator = document.getElementById("status-indicator");
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    indicator.className = "status-indicator status-online";
+                    console.log("服务器状态: 在线");
+                } else {
+                    indicator.className = "status-indicator status-offline";
+                    console.log("服务器状态: 离线");
+                }
+            } catch (error) {
+                indicator.className = "status-indicator status-offline";
+                console.log("服务器状态: 离线", error);
+            }
+        }
+
+        async function testHealth() {
+            const resultDiv = document.getElementById("health-result");
+            const testBtn = document.getElementById("health-btn");
+
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = '<span class="loading"></span>正在检查服务器状态...';
+            testBtn.disabled = true;
+
+            try {
+                console.log("发送健康检查请求到:", `${API_BASE_URL}/health`);
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                console.log("健康检查响应:", data);
+                
+                if (data.success) {
+                    showResult("health-result", 
+                        `✅ 服务器正常运行！<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        "success"
+                    );
+                } else {
+                    showResult("health-result", 
+                        `❌ 服务器异常！<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        "error"
+                    );
+                }
+            } catch (error) {
+                console.error("健康检查失败:", error);
+                showResult("health-result", 
+                    `❌ 连接失败！<br>错误: ${error.message}<br>请检查：<br>1. 后端服务器是否启动<br>2. 端口是否正确<br>3. 防火墙设置`, 
+                    "error"
+                );
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        async function testRegister() {
+            const name = document.getElementById("reg-name").value;
+            const phone = document.getElementById("reg-phone").value;
+            const password = document.getElementById("reg-password").value;
+            const resultDiv = document.getElementById("reg-result");
+            const testBtn = document.getElementById("reg-btn");
+
+            console.log("=== 开始注册测试 ===");
+            console.log("表单数据:", { name, phone, password });
+
+            if (!name || !phone || !password) {
+                showResult("reg-result", "请填写完整的注册信息", "error");
+                return;
+            }
+
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = '<span class="loading"></span>正在发送注册请求...';
+            testBtn.disabled = true;
+
+            try {
+                console.log("发送注册请求到:", `${API_BASE_URL}/register`);
+                const response = await fetch(`${API_BASE_URL}/register`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ name, phone, password }),
+                });
+
+                console.log("响应状态:", response.status);
+                const data = await response.json();
+                console.log("响应数据:", data);
+
+                if (data.success) {
+                    showResult("reg-result", 
+                        `✅ 注册成功！<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        "success"
+                    );
+                } else {
+                    showResult("reg-result", 
+                        `❌ 注册失败！<br>错误信息: ${data.message}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        "error"
+                    );
+                }
+            } catch (error) {
+                console.error("注册失败:", error);
+                showResult("reg-result", 
+                    `❌ 请求失败！<br>错误: ${error.message}<br>请检查网络连接和服务器状态`, 
+                    "error"
+                );
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        async function testLogin() {
+            const phone = document.getElementById("login-phone").value;
+            const password = document.getElementById("login-password").value;
+            const resultDiv = document.getElementById("login-result");
+            const testBtn = document.getElementById("login-btn");
+
+            console.log("=== 开始登录测试 ===");
+            console.log("表单数据:", { phone, password });
+
+            if (!phone || !password) {
+                showResult("login-result", "请填写完整的登录信息", "error");
+                return;
+            }
+
+            resultDiv.style.display = "block";
+            resultDiv.innerHTML = '<span class="loading"></span>正在发送登录请求...';
+            testBtn.disabled = true;
+
+            try {
+                console.log("发送登录请求到:", `${API_BASE_URL}/login`);
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ phone, password }),
+                });
+
+                console.log("响应状态:", response.status);
+                const data = await response.json();
+                console.log("响应数据:", data);
+
+                if (data.success) {
+                    showResult("login-result", 
+                        `✅ 登录成功！<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        "success"
+                    );
+                } else {
+                    showResult("login-result", 
+                        `❌ 登录失败！<br>错误信息: ${data.message}<br><pre>${JSON.stringify(data, null, 2)}</pre>`, 
+                        "error"
+                    );
+                }
+            } catch (error) {
+                console.error("登录失败:", error);
+                showResult("login-result", 
+                    `❌ 请求失败！<br>错误: ${error.message}<br>请检查网络连接和服务器状态`, 
+                    "error"
+                );
+            } finally {
+                testBtn.disabled = false;
+            }
+        }
+
+        function showResult(elementId, message, type) {
+            const resultDiv = document.getElementById(elementId);
+            resultDiv.className = "result " + type;
+            resultDiv.innerHTML = message;
+        }
+
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

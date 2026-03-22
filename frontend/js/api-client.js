@@ -1,5 +1,10 @@
-const API_BASE_URL =
+let API_BASE_URL =
   "https://city-public-service-platfom.2213499332.workers.dev/api";
+
+// 如果配置文件存在，使用配置文件中的设置
+if (window.APP_CONFIG && window.APP_CONFIG.API_BASE_URL) {
+  API_BASE_URL = window.APP_CONFIG.API_BASE_URL;
+}
 
 // 工具函数：验证手机号
 function validatePhone(phone) {

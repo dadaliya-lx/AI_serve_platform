@@ -10,9 +10,7 @@
     "db:create": "wrangler d1 create city-service-db"
   },
   "dependencies": {
-    "hono": "^4.0.0",
-    "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2"
+    "hono": "^4.0.0"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"
