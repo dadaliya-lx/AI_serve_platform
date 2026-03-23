@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Frontend for AI City Public Service Platform",
   "scripts": {
-    "build": "echo 'Static website - no build needed'"
+    "build": "echo 'Static website - no build needed'",
+    "deploy": "wrangler deploy",
+    "preview": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.76.0"
   }
 }
